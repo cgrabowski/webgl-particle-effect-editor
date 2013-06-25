@@ -1,0 +1,23 @@
+html, body {
+  width: 100%;
+  height: 100%;  
+}
+
+body {
+  background: #000;
+}
+
+#container {
+  width: 75%;
+  margin: 0px auto;
+  text-align: center;
+}
+
+header, .sidebar {
+  color: #FFF;
+  background:#404040;
+}
+
+.sidebar {
+  
+}
