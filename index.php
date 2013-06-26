@@ -3,12 +3,6 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <title>WebGL Particle Effect</title>
-    <link rel='stylesheet' href='css/reset.css'>
-    <link rel='stylesheet' href='css/rickshaw/detail.css'>
-    <link rel='stylesheet' href='css/rickshaw/graph.css'>
-    <link rel='stylesheet' href='css/rickshaw/render-controls.css'>
-    <link rel='stylesheet' href='css/typography.css'>
-    <link rel='stylesheet' href='css/main.css'>
     <script id="shader-vs" type="x-shader/x-vertex">
       attribute vec3 aVertexPosition;
       attribute vec2 aTextureCoord;
@@ -29,8 +23,15 @@
       gl_FragColor = tmp;
       }
     </script>
-    <script src="http://code.jquery.com/jquery-latest.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.15/jquery-ui.min.js"></script>
+    <link rel='stylesheet' href='css/reset.css'>
+    <link rel='stylesheet' href='css/jquery-ui/jquery-ui-1.10.3.css'>
+    <link rel='stylesheet' href='css/rickshaw/detail.css'>
+    <link rel='stylesheet' href='css/rickshaw/graph.css'>
+    <link rel='stylesheet' href='css/rickshaw/render-controls.css'>
+    <link rel='stylesheet' href='css/typography.css'>
+    <link rel='stylesheet' href='css/gui.css'>
+    <script src="js/jquery-1.9.1.js"></script>    
+    <script src="js/jquery-ui/jquery-ui-1.10.3.js"></script>
     <script src="http://localhost/WebGLParticleEffect/js/gl-matrix.js"></script>
     <script src="http://localhost/WebGLParticleEffect/js/webgl-utils.js"></script>
     <script src='http://localhost/WebGLParticleEffect/js/particle-effect.js'></script>
@@ -41,8 +42,8 @@
     <script src='js/rickshaw/render-controls.js'></script>
     <script src='js/gui.js'></script>
   </head>
-  <body onload="engine();">
-    <header>WebGL PEE</header>
+  <body>
+    <header id='header'>WebGL PEE<a href="#" id="header-opts-btn"><img src="images/gui-gear-grey.png"></a></header>
     <div id='container'>
       <canvas id="webgl-canvas" width='500' height='500'></canvas>
     </div>

@@ -1,0 +1,54 @@
+html, body {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  color: #E0E0E0;
+  background: #000;
+}
+
+header {
+  padding-left: 5px;
+}
+
+header, .toolbar {  
+  background:#404040;
+}
+
+#container {
+  width: 75%;
+  margin: 0px auto;
+  text-align: center;
+}
+
+.toolbar {
+  width: 200px;
+  padding-bottom: 16px;
+  padding-bottom: 1.625rem;
+}
+
+.setting-tainer {
+  margin-top: 16px;
+  margin-top: 1.625rem
+}
+
+.ui-slider {
+  margin-left: 6px;
+  margin-right: 6px;
+  background: #A0A0A0;
+}
+
+.ui-slider-handle {
+  background: #E0E0E0;
+}
+
+.toolbar-header {
+  text-align: left;
+  cursor: move;
+}
+
+.toolbar-header a, #header-opts-btn{
+  float: right;
+  margin: 1px;
+}
