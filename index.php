@@ -24,6 +24,7 @@
       }
     </script>
     <link rel='stylesheet' href='css/reset.css'>
+    <link rel='stylesheet' href='css/custom-scrollbar.css'>
     <link rel='stylesheet' href='css/jquery-ui/jquery-ui-1.10.3.css'>
     <link rel='stylesheet' href='css/rickshaw/detail.css'>
     <link rel='stylesheet' href='css/rickshaw/graph.css'>
@@ -36,6 +37,7 @@
     <script src="http://localhost/WebGLParticleEffect/js/webgl-utils.js"></script>
     <script src='http://localhost/WebGLParticleEffect/js/particle-effect.js'></script>
     <script src='http://localhost/WebGLParticleEffect/js/engine.js'></script>
+    <script src='js/custom-scrollbar.js'></script>
     <script src='js/rickshaw/vendor/d3.min.js'></script>
     <script src='js/rickshaw/vendor/d3.layout.min.js'></script>
     <script src='js/rickshaw/rickshaw.js'></script>

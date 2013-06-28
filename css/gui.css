@@ -12,7 +12,7 @@ header {
   padding-left: 5px;
 }
 
-header, .toolbar {  
+header, .toolbar, #main-menu{  
   background:#404040;
 }
 
@@ -22,20 +22,47 @@ header, .toolbar {
   text-align: center;
 }
 
+#main-menu {
+
+}
+
 .toolbar {
   width: 200px;
   padding-bottom: 16px;
   padding-bottom: 1.625rem;
 }
 
+.toolbar-header {
+  cursor: move;
+  margin-left: 6px;
+  margin-left: 0.611rem;
+  margin-top: 4px;
+  margin-top: 0.407rem;
+  text-align: left;
+  width: 200px;
+}
+
+.all-settings-tainer {
+  width: 200px;
+  height: 300px;
+}
+
 .setting-tainer {
   margin-top: 16px;
-  margin-top: 1.625rem
+  margin-top: 1.625rem;
+  border-top: 1px solid #000;
+}
+
+.setting-tainer h5 {
+  margin-bottom: 6px;
+  margin-bottom: 0.611rem;
 }
 
 .ui-slider {
   margin-left: 6px;
+  margin-left: 0.611rem;
   margin-right: 6px;
+  margin-right: 0.611rem;
   background: #A0A0A0;
 }
 
@@ -43,12 +70,19 @@ header, .toolbar {
   background: #E0E0E0;
 }
 
-.toolbar-header {
-  text-align: left;
-  cursor: move;
-}
-
 .toolbar-header a, #header-opts-btn{
   float: right;
   margin: 1px;
+}
+
+.min-span, .max-span {
+  position: absolute;
+}
+
+.min-span {
+  left: 0px;
+}
+
+.max-span {
+  right: 0px;
 }

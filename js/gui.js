@@ -1,21 +1,34 @@
-gui = {
-  zStack: []
-}
-
 $(document).ready(function () {
+  $('canvas').width(($(document).width() < 1000) ? $(document).width() : 1000)
   engine(function (effect) {
 
-    for (var i = 0; i < effect.emitters.length; i++) {
-      var eo = effect.emitters[i].opts
-      toolbar(eo.name, {
-        'min particles': eo.minParticles,
-        'max particles': eo.maxParticles,
-        'min life': eo.minLife,
-        'max life': eo.maxLife,
-        'duration': eo.duration,
-        'min delay': eo.minDelay,
-        'max delay': eo.maxDelay
-      })
+    var defaultReq = new XMLHttpRequest()
+
+    defaultReq.onload = function () {
+      handleRes(this.responseText)
+    }
+    defaultReq.open('get', 'http://localhost/WebGLParticleEffectEditor/gui-default.json')
+    defaultReq.send()
+
+
+    function handleRes (res) {
+      var tbOpts = JSON.parse(res)
+      for (var i = 0; i < effect.emitters.length; i++) {
+        var opts = {}
+        for (var opt in tbOpts) {
+          if (opt.match(/name|continuous|wind|rotation vec/))
+            continue
+          opts[opt] = {}
+          for (var val in tbOpts[opt]) {
+            opts[opt][val] = new Array(3)
+            opts[opt][val][0] = tbOpts[opt][val][0]
+            opts[opt][val][1] = effect.emitters[i].opts[val]
+            opts[opt][val][2] = tbOpts[opt][val][1]
+          }
+        }
+        toolbar(effect.emitters[i], opts)
+      }
+      toolbar(effect.emitters, opts, true)
     }
   })
 })
@@ -26,11 +39,12 @@ $(window).on('resize load', function (event) {
   tainer.width($(window).width())
 })
 
-function toolbar (name, settings) {
-  var toolbar = $('<div>')
-  toolbar.settings = settings
+function toolbar (emitter, opts, master) {
+  var tb = $('<div>')
 
-  toolbar.draggable({snap: '#header, #container, .toolbar'})
+  tb.data('emitter', emitter)
+
+  tb.draggable({snap: '#header, #container, .toolbar'})
     .addClass('toolbar')
     .appendTo('#container')
     .css({
@@ -43,7 +57,7 @@ function toolbar (name, settings) {
 
     .mousedown(function (event) {
     var self = this
-      , zStack = gui.zStack
+      , zStack = toolbar.zStack
 
     zStack.forEach(function (val, ind, arr) {
       if (zStack[ind] === self)
@@ -58,11 +72,11 @@ function toolbar (name, settings) {
       zStack.pop()
   })
 
-  $('<div class="toolbar-header">' + name +
+  $('<div class="toolbar-header">' + ((master) ? "master" : emitter.name) +
     '<a href="" class="close"><img src="images/gui-close-grey.png"></a>' +
     '<a href="" class="up"><img src="images/gui-up-grey.png">' +
     '<a href="" style="display: none" class="down"><img src="images/gui-down-grey.png"></a>' +
-    '</div>').appendTo(toolbar)
+    '</div>').appendTo(tb)
 
   $('.up').click(function (event) {
     var $this = $(this)
@@ -83,24 +97,98 @@ function toolbar (name, settings) {
     return false
   })
 
+  for (var opt in opts) {
+    var min = null
+      , max = null
+      , minKey = null
+      , maxKey = null
+      , val = null
+    for (var key in opts[opt]) {
+      if (key.match(/min/i)) {
+        min = opts[opt][key]
+        minKey = key
+      } else if (key.match(/max/i)) {
+        max = opts[opt][key]
+        maxKey = key
+      } else {
+        val = opts[opt][key]
+        key = [key]
+        break
+      }
 
-  i = 0
-  for (var setting in settings) {
-    var settingTainer = $('<div>').addClass('setting-tainer')
-      .appendTo(toolbar)
-    $('<h5>').text(setting + ": " + settings[setting]).appendTo(settingTainer)
-    $('<div>').attr('id', 'slider' + i++).slider({
-      change: function (event, ui) {
-        console.log(ui.value)
-      }})
-      .appendTo(settingTainer)
-  }
-
-  toolbar.on('activeEmitterChange', function (event, newEmitter) {
-    var i = 0;
-    for (var setting in toolbar.settigs) {
-      toolbar.settings[setting] = newEmitter[setting]
-      $(toolbar).find('<h5>')[i++].text(setting + ": " + settings[setting])
+      if (min && max) {
+        key = [minKey, maxKey]
+        break
+      }
     }
-  })
+
+    var settingTainer = $('<div>')
+      , sliderTainer = $('<div>')
+      , minSpan = $('<span class="min-span">')
+      , maxSpan = $('<span class="max-span">')
+
+    settingTainer.addClass('setting-tainer').data('key', key)
+      .appendTo(tb)
+    $('<h5>').text(opt).appendTo(settingTainer)
+
+    if (min && max) {
+      sliderTainer.slider({
+        min: min[0],
+        values: [min[1], max[1]],
+        max: max[2],
+        range: true,
+        step: (max[2] - min[0]) / 1000,
+        slide: function (event, ui) {
+          var emitter = $(ui.handle).closest('.toolbar').data().emitter
+            , tainer = $(ui.handle).closest('.setting-tainer')
+            , key = tainer.data().key
+                        
+          if (master) {
+            for (var i = 0; i < emitter.length; i++) {
+              emitter[i][key[0]] = ui.values[0]
+              emitter[i][key[1]] = ui.values[1]
+            }
+          } else {
+            emitter[key[0]] = ui.values[0]
+            emitter[key[1]] = ui.values[1]
+          }
+          tainer.find('a:nth-child(2)').attr('title', ui.values[0])
+          tainer.find('a:last-child').attr('title', ui.values[1])
+        }
+      })
+        .appendTo(settingTainer)
+      settingTainer.find('.ui-slider .ui-slider-handle:nth-child(2)').attr('title', min[1])
+      settingTainer.find('.ui-slider .ui-slider-handle:last-child').attr('title', max[1])
+      minSpan.text(min[0])
+      maxSpan.text(max[2])
+
+    } else {
+      sliderTainer.slider({
+        min: val[0],
+        value: val[1],
+        max: val[2],
+        step: (val[2] - val[0]) / 1000,
+        slide: function (event, ui) {
+          var emitter = $(ui.handle).closest('.toolbar').data().emitter
+            , key = $(ui.handle).closest('.setting-tainer').data().key
+          if (master) {
+            for (var i = 0; i < emitter.length; i++) {
+              emitter[i][key[0]] = ui.value
+            }
+          } else {
+            emitter[key] = ui.value
+          }
+          $(ui.handle).attr('title', ui.value)
+        }
+      })
+        .appendTo(settingTainer)
+      settingTainer.find('.ui-slider .ui-slider-handle:last-child').attr('title', val[1])
+      minSpan.text(val[0])
+      maxSpan.text(val[2])
+    }
+
+    sliderTainer.closest('.setting-tainer').prepend(minSpan).prepend(maxSpan)
+  }
 }
+
+toolbar.zStack = []

@@ -1,0 +1,63 @@
+{
+  "name": "gui defaults",
+  "num particles": {
+    "minParticles": [1, 1000],
+    "maxParticles": [1, 1000]
+  },
+  "life": {
+    "minLife": [1, 10000],
+    "maxLife": [1, 10000]
+  },
+  "duration": {
+    "duration": [1, 10000]
+  },
+  "continuous": {
+    "continuous": "boolean"
+  },
+  "delay": {
+    "minDelay": [0, 10000],
+    "maxDelay": [0, 10000]
+  },
+  "x offset": {
+    "minOffsetX": [-10, 10],
+    "maxOffsetX": [-10, 10]
+  },
+  "y offset": {
+    "minOffsetY": [-10, 10],
+    "maxOffsetY": [-10, 10]
+  },
+  "z offset": {
+    "minOffsetZ": [-10, 10],
+    "maxOffsetZ": [-10, 10]
+  },
+  "speed": {
+    "minSpeed": [1, 1000],
+    "maxSpeed": [1, 1000]
+  },
+  "direction x": {
+    "minDirX": [-1, 1],
+    "maxDirX": [-1, 1]
+  },
+  "direction y": {
+    "minDirY": [-1, 1],
+    "maxDirY": [-1, 1]
+  },
+  "direction z": {
+    "minDirZ": [-1, 1],
+    "maxDirZ": [-1, 1]
+  },
+  "wind": {
+    "wind": [[-1, -1, -1], [1, 1, 1]]
+  },
+  "rotation": {
+    "minRot": [-720, 720],
+    "maxRot": [-720, 720]
+  },
+  "rotation vec": {
+    "minRotVec": [-1, -1, -1],
+    "maxRotVec": [1, 1, 1]
+  },
+  "rotation accel": {
+    "rotAcc": [-1, 1]
+  }
+}
