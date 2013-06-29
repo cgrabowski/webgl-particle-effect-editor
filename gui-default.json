@@ -50,8 +50,8 @@
     "wind": [[-1, -1, -1], [1, 1, 1]]
   },
   "rotation": {
-    "minRot": [-720, 720],
-    "maxRot": [-720, 720]
+    "minRot": [-7200, 7200],
+    "maxRot": [-7200, 7200]
   },
   "rotation vec": {
     "minRotVec": [-1, -1, -1],
