@@ -53,7 +53,7 @@ function toolbar (emitter, opts, master) {
     top: $('header').height()
   })
 
-    .resizable({handles: "e, w"})
+    //.resizable({handles: "s, e, w", minWidth: 150})      
 
     .mousedown(function (event) {
     var self = this
@@ -142,7 +142,7 @@ function toolbar (emitter, opts, master) {
           var emitter = $(ui.handle).closest('.toolbar').data().emitter
             , tainer = $(ui.handle).closest('.setting-tainer')
             , key = tainer.data().key
-                        
+
           if (master) {
             for (var i = 0; i < emitter.length; i++) {
               emitter[i][key[0]] = ui.values[0]
@@ -189,6 +189,23 @@ function toolbar (emitter, opts, master) {
 
     sliderTainer.closest('.setting-tainer').prepend(minSpan).prepend(maxSpan)
   }
+
+  tb.mCustomScrollbar({
+    advanced: {
+      updateOnContentResize: true
+    }})
+
+  tb.find('.setting-tainer').first().css('padding-top', '15px')
+  tb.find('.setting-tainer').last().css('padding-bottom', '5px')
+  tb.resizable({
+    handles: 's, e, w',
+    minWidth: 175,
+    resize: function (event, ui) {
+      ui.element.find('.toolbar-header').width(tb.width() - (12))
+    }})
+
+  tb.find('.toolbar-header').width(tb.width() - (12))
+  tb.find('.mCSB_draggerContainer').css('top', '35px')
 }
 
 toolbar.zStack = []

@@ -6,10 +6,12 @@ html, body {
 body {
   color: #E0E0E0;
   background: #000;
+  overflow: hidden;
 }
 
 header {
   padding-left: 5px;
+  border-bottom: 1px solid black;
 }
 
 header, .toolbar, #main-menu{  
@@ -28,23 +30,24 @@ header, .toolbar, #main-menu{
 
 .toolbar {
   width: 200px;
+  height: 300px;
   padding-bottom: 16px;
   padding-bottom: 1.625rem;
+  border: 1px solid black;
 }
 
 .toolbar-header {
   cursor: move;
-  margin-left: 6px;
-  margin-left: 0.611rem;
-  margin-top: 4px;
-  margin-top: 0.407rem;
+  padding-left: 6px;
+  padding-left: 0.611rem;
+  padding-top: 4px;
+  padding-top: 0.407rem;
   text-align: left;
-  width: 200px;
-}
-
-.all-settings-tainer {
-  width: 200px;
-  height: 300px;
+  position: fixed;
+  width: 180px;
+  border-bottom: 1px solid black;
+  background: #404040;
+  z-index: 10000;
 }
 
 .setting-tainer {
