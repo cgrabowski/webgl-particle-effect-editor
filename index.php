@@ -45,7 +45,6 @@
     <script src='js/gui.js'></script>
   </head>
   <body>
-    <header id='header'>WebGL PEE<a href="#" id="header-opts-btn"><img src="images/gui-gear-grey.png"></a></header>
     <div id='container'>
       <canvas id="webgl-canvas" width='500' height='500'></canvas>
     </div>

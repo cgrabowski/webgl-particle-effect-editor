@@ -14,7 +14,7 @@ header {
   border-bottom: 1px solid black;
 }
 
-header, .toolbar, #main-menu{  
+header, .toolbar, #main-menu{    
   background:#404040;
 }
 
@@ -25,7 +25,33 @@ header, .toolbar, #main-menu{
 }
 
 #main-menu {
+  visibility: hidden;
+  position: absolute;
+  right: 0px;
+  top: 27px;
+  z-index: 1000000;
+  width: 25%;
+  padding: 6px;
+  padding: 0.611rem;
+}
 
+#main-menu h4 {
+  z-index: 1000000;
+  margin: 0px;
+  padding: 0px;
+}
+
+#main-menu p {
+  border-top: 1px solid black;
+}
+
+.main-menu-text-p {
+  height: 40px;
+  clear: right;
+}
+
+.text-p-img {
+  float: right;
 }
 
 .toolbar {
@@ -33,6 +59,8 @@ header, .toolbar, #main-menu{
   height: 300px;
   padding-bottom: 16px;
   padding-bottom: 1.625rem;
+  padding-left: 6px;
+  padding-left: 0.611rem;
   border: 1px solid black;
 }
 
@@ -47,7 +75,7 @@ header, .toolbar, #main-menu{
   width: 180px;
   border-bottom: 1px solid black;
   background: #404040;
-  z-index: 10000;
+  z-index: 3;
 }
 
 .setting-tainer {
@@ -59,6 +87,11 @@ header, .toolbar, #main-menu{
 .setting-tainer h5 {
   margin-bottom: 6px;
   margin-bottom: 0.611rem;
+}
+
+.mCSB_container {
+  margin-right: 16px;
+  margin-right: 1.625rem;
 }
 
 .ui-slider {
@@ -73,9 +106,13 @@ header, .toolbar, #main-menu{
   background: #E0E0E0;
 }
 
-.toolbar-header a, #header-opts-btn{
+.toolbar-header a, #main-menu-anchor{
   float: right;
   margin: 1px;
+}
+
+#main-menu-anchor {
+  padding: 3px;
 }
 
 .min-span, .max-span {

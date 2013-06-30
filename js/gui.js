@@ -1,14 +1,21 @@
 (function () {
 
   $(document).ready(function () {
+    console.log('unload error: ' + localStorage.getItem('unloaderror'))
+    // Get opts saved in local storage
     var opts = localStorage.getItem('opts') || null
-    opts = (opts.match(/{}/)) ? null : JSON.parse(opts)    
+    opts = (opts.match(/{}/)) ? null : JSON.parse(opts)
+    // Add an empty 'shared' opts object
     if (opts)
       opts.unshift({name: 'shared'})
-    console.log(opts)
+    //console.log(opts)
+
+    // Set initial size of canvas
     $('canvas').width(($(document).width() < 1000) ? $(document).width() : 1000)
 
+    // call the effect engine, passing opts and callback
     engine(opts, function (effect) {
+      // Get gui default settings
       var defaultReq = new XMLHttpRequest()
 
       defaultReq.onload = function () {
@@ -19,14 +26,18 @@
 
 
       function handleRes (res) {
+        // Parse gui opts
         var tbOpts = JSON.parse(res)
         for (var i = 0; i < effect.emitters.length; i++) {
+          // Build toolbars using default gui opts and emitter opts
           var opts = {}
           for (var opt in tbOpts) {
-            if (opt.match(/name|continuous|wind|rotation vec/))
+            if (opt.match(/name|duration|continuous|wind|rotation vec/))
               continue
             opts[opt] = {}
             for (var val in tbOpts[opt]) {
+              // Slider limits come from gui opts
+              // Initial slider value comes from emitters opts
               opts[opt][val] = new Array(3)
               opts[opt][val][0] = tbOpts[opt][val][0]
               opts[opt][val][1] = effect.emitters[i].opts[val]
@@ -37,24 +48,114 @@
         }
         toolbar(effect.emitters, opts, true)
       }
+
+      // build the header and main menu
+      $('<div>').attr('id', 'main-menu').prependTo('body')
+      $('<header>').attr('id', 'header').text('WebGL PEE').prependTo('body')
+      $('<a>').attr('id', 'main-menu-anchor').appendTo('#header')
+        .click(function (event) {
+        if ($('#main-menu').css('visibility') === 'hidden')
+          $('#main-menu').css('visibility', 'visible')
+        else
+          $('#main-menu').css('visibility', 'hidden')
+        return false;
+      })
+      $('<img>').attr({
+        src: 'images/gui-gear-grey.png',
+        height: 16,
+        width: 16
+      }).appendTo('#main-menu-anchor')
+
+      $('#main-menu').append('<h4>Textures</h4>')
+      for (var i = 0; i < effect.emitters.length; i++) {
+        var tp = $('<p>')
+          , inp = $('<input>')
+          , img = $('<img>')
+        tp.addClass('main-menu-text-p').text(effect.emitters[i].name).appendTo('#main-menu')
+        // file input tag
+        inp.attr('type', 'file').css('display', 'none').appendTo(tp)
+        // replace menu image with selected image
+        inp.on('change', function (event) {
+          var file = this.files[0]
+            , newImg = $('<img>')
+            , $self = $(this)
+          newImg.attr({
+            height: 32,
+            width: 32
+          }).addClass('text-p-img')
+            .click(function (event) {
+            $self.click()
+          })
+          newImg.get(0).file = file
+          $self.data('img').remove()
+          $self.data('img', newImg)
+          $self.data('p').append(newImg)
+
+          // read the image into the img tag
+          var reader = new FileReader()
+          reader.onload = (function (aImg) {
+            return function (e) {
+              aImg.onload = function (event) {
+                //replace the emitter texture with the new image
+                effect.replaceTexture(aImg, $self.data('index'))
+              }
+              aImg.src = e.target.result;
+            };
+          })(newImg.get(0));
+          reader.readAsDataURL(file);
+        })
+        // since input is display:hidden, its coresponding menu image
+        // is saved as as jquery data
+        inp.data('img', img)
+        // as well as its corresponding p tag
+        inp.data('p', tp)
+        // and the coresponing emitter
+        inp.data('emitter', effect.emitters[i])
+        inp.data('index', i)
+        // likewise, the menu images' coresponding input tag
+        // is saved as jquery data
+        img.data('input', inp)
+        img.attr({
+          src: effect.emitters[i].textSource,
+          height: 32,
+          width: 32
+        })
+          .addClass('text-p-img').appendTo(tp)
+          // when the image is clicked, the input's
+          // click event is triggered
+          .click(function (event) {
+          $(this).data('input').click()
+        })
+
+      }
     })
   })
 
+  // #container is set to the size of the window
+  // so draggables can snap to the edge of the screen
   $(window).on('resize load', function (event) {
     var tainer = $('#container')
     tainer.height($(window).height())
     tainer.width($(window).width())
   })
 
-  $(window).on('unload', function (event) {
-    var emitters = $('.toolbar').first().data().emitter.effect.emitters
-    var optsArray = []
-    for (var i = 0; i < emitters.length; i++) {
-      optsArray.push(emitters[i].opts)
+  // Save emitters opts to local storage on unload
+  $(window).unload(function (event) {
+    try {
+      ParticleEffect.disposeTextures()
+      var emitters = $('.toolbar').first().data().emitter.effect.emitters
+      var optsArray = []
+      for (var i = 0; i < emitters.length; i++) {
+        optsArray.push(emitters[i].opts)
+      }
+      localStorage.setItem('opts', JSON.stringify(optsArray))
+      localStorage.setItem('unloaderror', "no error")
+    } catch (e) {
+      localStorage.setItem('unloaderror', e.message)
     }
-    localStorage.setItem('opts', JSON.stringify(optsArray))
   })
 
+  // toolbar builder
   function toolbar (emitter, opts, master) {
     var tb = $('<div>')
 
@@ -69,8 +170,7 @@
       top: $('header').height()
     })
 
-      //.resizable({handles: "s, e, w", minWidth: 150})      
-
+      // toolbar z-indexes are a first-in, last-out stack
       .mousedown(function (event) {
       var self = this
         , zStack = toolbar.zStack
@@ -96,20 +196,35 @@
 
     $('.up').click(function (event) {
       var $this = $(this)
-      $this.closest(".toolbar").find('.setting-tainer').css('display', 'none')
-      $this.css('display', 'none').siblings('.down').css('display', 'inline')
+        , tb = $this.closest('.toolbar')
+      tb.mCustomScrollbar('disable')
+      tb.resizable('disable')
+      tb.find('.setting-tainer, .up').css('display', 'none')
+      tb.attr('data-height', tb.height())
+      tb.css('height', '0px')
+      $this.siblings('.down').css('display', 'block')
       return false
     })
 
     $('.down').click(function (event) {
-      var $this = $(this)
-      $this.closest(".toolbar").find('.setting-tainer').css('display', 'block')
-      $this.css('display', 'none').siblings('.up').css('display', 'inline')
+      try {
+        var $this = $(this)
+          , tb = $this.closest('.toolbar')
+        console.log(tb.attr('data-height'))
+        tb.height(tb.attr('data-height'))
+        tb.removeAttr('data-height')
+        tb.find('.setting-tainer, .up').css('display', 'block')
+        $this.css('display', 'none')
+        tb.resizable('enable')
+        tb.mCustomScrollbar('update')
+      } catch (e) {
+        console.log(e.message)
+      }
       return false
     })
 
     $('.close').click(function (event) {
-      $(this).closest(".toolbar").remove()
+      $(this).closest(".toolbar").css('display', 'none')
       return false
     })
 
@@ -147,6 +262,7 @@
         .appendTo(tb)
       $('<h5>').text(opt).appendTo(settingTainer)
 
+      // create sliders for opts with a min and max
       if (min && max) {
         sliderTainer.slider({
           min: min[0],
@@ -162,15 +278,15 @@
             if (master) {
               for (var i = 0; i < emitter.length; i++) {
                 emitter[i][key[0]] = ui.values[0]
-                emitter[i].opts[key[0]]  = emitter[i][key[0]]
+                emitter[i].opts[key[0]] = emitter[i][key[0]]
                 emitter[i][key[1]] = ui.values[1]
-                emitter[i].opts[key[1]]  = emitter[i][key[1]]
+                emitter[i].opts[key[1]] = emitter[i][key[1]]
               }
             } else {
               emitter[key[0]] = ui.values[0]
-              emitter.opts[key[0]]  = emitter[key[0]]
+              emitter.opts[key[0]] = emitter[key[0]]
               emitter[key[1]] = ui.values[1]
-              emitter.opts[key[1]]  = emitter[key[1]]
+              emitter.opts[key[1]] = emitter[key[1]]
             }
             tainer.find('a:nth-child(2)').attr('title', ui.values[0])
             tainer.find('a:last-child').attr('title', ui.values[1])
@@ -182,6 +298,7 @@
         minSpan.text(min[0])
         maxSpan.text(max[2])
 
+        // create sliders for opts with only one value
       } else {
         sliderTainer.slider({
           min: val[0],
@@ -194,11 +311,11 @@
             if (master) {
               for (var i = 0; i < emitter.length; i++) {
                 emitter[i][key[0]] = ui.value
-                emitter[i].opts[key[0]]  = emitter[i][key[0]]
+                emitter[i].opts[key[0]] = emitter[i][key[0]]
               }
             } else {
               emitter[key] = ui.value
-              emitter.opts[key]  = emitter[key]
+              emitter.opts[key] = emitter[key]
             }
             $(ui.handle).attr('title', ui.value)
           }
@@ -223,12 +340,14 @@
       handles: 's, e, w',
       minWidth: 175,
       resize: function (event, ui) {
-        ui.element.find('.toolbar-header').width(tb.width() - (12))
+        ui.element.find('.toolbar-header').width(tb.width() - 6)
+        ui.element.mCustomScrollbar('update')
       }})
 
-    tb.find('.toolbar-header').width(tb.width() - (12))
+    tb.find('.toolbar-header').width(tb.width() - 6)
     tb.find('.mCSB_draggerContainer').css('top', '35px')
   }
 
+  // toolbar z-index stack
   toolbar.zStack = []
 }())
