@@ -1,20 +1,51 @@
 (function () {
 
+  // #container is set to the size of the window
+  // so draggables can snap to the edge of the screen
+  $(window).on('resize load', function (event) {
+    var tainer = $('#container')
+    tainer.height($(window).height())
+    tainer.width($(window).width())
+  })
+
+  // Save emitters opts to local storage on unload
+  // Save any errors when unloading the window so they can be read onload
+  $(window).unload(function (event) {
+    localStorage.setItem('unloaderror', "no error")
+    try {
+      var emitters = $('.toolbar').first().data().emitter.effect.emitters
+        , optsArray = []
+
+      for (var i = 0; i < emitters.length; i++) {
+        optsArray.push(emitters[i].opts)
+      }
+
+      localStorage.setItem('opts', JSON.stringify(optsArray))
+    } catch (e) {
+      localStorage.setItem('unloaderror', e.message)
+    }
+  })
+
   $(document).ready(function () {
-    console.log('unload error: ' + localStorage.getItem('unloaderror'))
-    // Get opts saved in local storage
-    var opts = localStorage.getItem('opts') || null
-    opts = (opts.match(/{}/)) ? null : JSON.parse(opts)
-    // Add an empty 'shared' opts object
-    if (opts)
-      opts.unshift({name: 'shared'})
-    //console.log(opts)
+
+    // If an error occured during last unload, log it
+    if (localStorage.getItem('unloaderror'))
+      console.log('unload error: ' + localStorage.getItem('unloaderror'))
+    /*
+     // Get opts saved in local storage
+     var opts = localStorage.getItem('opts') || null
+     if ((opts !== null) || (typeof(opts) !== 'undefined')) {
+     opts = (opts.match(/{}/)) ? null : JSON.parse(opts)
+     // Add an empty 'shared' opts object
+     opts.unshift({name: 'shared'})
+     }
+     */
 
     // Set initial size of canvas
-    $('canvas').width(($(document).width() < 1000) ? $(document).width() : 1000)
+    $('#webgl-canvas').width(($(document).width() < 1000) ? $(document).width() : 1000)
 
-    // call the effect engine, passing opts and callback
-    engine(opts, function (effect) {
+    // call the effect engine, passing canvas, opts and callback
+    engine($('#webgl-canvas')[0], null, function (effect) {
       // Get gui default settings
       var defaultReq = new XMLHttpRequest()
 
@@ -24,16 +55,18 @@
       defaultReq.open('get', 'http://localhost/WebGLParticleEffectEditor/gui-default.json')
       defaultReq.send()
 
-
       function handleRes (res) {
         // Parse gui opts
         var tbOpts = JSON.parse(res)
+
+        // Build toolbars using default gui opts and emitter opts
         for (var i = 0; i < effect.emitters.length; i++) {
-          // Build toolbars using default gui opts and emitter opts
           var opts = {}
+
           for (var opt in tbOpts) {
             if (opt.match(/name|duration|continuous|wind|rotation vec/))
               continue
+
             opts[opt] = {}
             for (var val in tbOpts[opt]) {
               // Slider limits come from gui opts
@@ -44,8 +77,12 @@
               opts[opt][val][2] = tbOpts[opt][val][1]
             }
           }
+
+          // create individual toolbar emitters
           toolbar(effect.emitters[i], opts)
         }
+
+        // create the master toolbar (it affects all emitters)
         toolbar(effect.emitters, opts, true)
       }
 
@@ -96,8 +133,8 @@
           reader.onload = (function (aImg) {
             return function (e) {
               aImg.onload = function (event) {
-                //replace the emitter texture with the new image
-                effect.replaceTexture(aImg, $self.data('index'))
+                //replace the emitter texture with the new image                
+                effect.textureManager('replace')(aImg, $self.data('index'))
               }
               aImg.src = e.target.result;
             };
@@ -105,7 +142,7 @@
           reader.readAsDataURL(file);
         })
         // since input is display:hidden, its coresponding menu image
-        // is saved as as jquery data
+        // is saved as jquery data
         inp.data('img', img)
         // as well as its corresponding p tag
         inp.data('p', tp)
@@ -129,30 +166,6 @@
 
       }
     })
-  })
-
-  // #container is set to the size of the window
-  // so draggables can snap to the edge of the screen
-  $(window).on('resize load', function (event) {
-    var tainer = $('#container')
-    tainer.height($(window).height())
-    tainer.width($(window).width())
-  })
-
-  // Save emitters opts to local storage on unload
-  $(window).unload(function (event) {
-    try {
-      ParticleEffect.disposeTextures()
-      var emitters = $('.toolbar').first().data().emitter.effect.emitters
-      var optsArray = []
-      for (var i = 0; i < emitters.length; i++) {
-        optsArray.push(emitters[i].opts)
-      }
-      localStorage.setItem('opts', JSON.stringify(optsArray))
-      localStorage.setItem('unloaderror', "no error")
-    } catch (e) {
-      localStorage.setItem('unloaderror', e.message)
-    }
   })
 
   // toolbar builder
