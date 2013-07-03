@@ -33,10 +33,14 @@
     <link rel='stylesheet' href='css/gui.css'>
     <script src="js/jquery-1.9.1.js"></script>    
     <script src="js/jquery-ui/jquery-ui-1.10.3.js"></script>
+    <script src='js/FileSaver.min.js'></script>
+    <script src="http://localhost/WebGLParticleEffect/js/three.js"></script>
     <script src="http://localhost/WebGLParticleEffect/js/gl-matrix.js"></script>
     <script src="http://localhost/WebGLParticleEffect/js/webgl-utils.js"></script>
+    <script src="http://localhost/WebGLParticleEffect/js/trackball-controls.js"></script>
     <script src='http://localhost/WebGLParticleEffect/js/particle-effect.js'></script>
     <script src='http://localhost/WebGLParticleEffect/js/engine.js'></script>
+    <!--<script src='http://localhost/WebGLParticleEffect/js/threejs-particle-plugin.js'></script>-->
     <script src='js/custom-scrollbar.js'></script>
     <script src='js/rickshaw/vendor/d3.min.js'></script>
     <script src='js/rickshaw/vendor/d3.layout.min.js'></script>
@@ -45,8 +49,8 @@
     <script src='js/gui.js'></script>
   </head>
   <body>
-    <div id='container'>
+    <!--<div id='container'>
       <canvas id="webgl-canvas" width='500' height='500'></canvas>
-    </div>
+    </div>-->
   </body>
 </html>

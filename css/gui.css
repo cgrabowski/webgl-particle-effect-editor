@@ -11,10 +11,15 @@ body {
 
 header {
   padding-left: 5px;
-  border-bottom: 1px solid black;
+  border-bottom: 1px solid #000;
 }
 
-header, .toolbar, #main-menu{    
+button {
+  color: #E0E0E0;
+  border: 3px solid #000;
+}
+
+header, .toolbar, #main-menu, button {    
   background:#404040;
 }
 
@@ -31,18 +36,29 @@ header, .toolbar, #main-menu{
   top: 27px;
   z-index: 1000000;
   width: 25%;
-  padding: 6px;
-  padding: 0.611rem;
-}
-
-#main-menu h4 {
-  z-index: 1000000;
-  margin: 0px;
-  padding: 0px;
+  padding-top: 0px;
 }
 
 #main-menu p {
-  border-top: 1px solid black;
+  border-bottom: 1px solid black;
+}
+
+.menu-div {
+  border-bottom: 10px solid #000;
+}
+
+.menu-div:last-of-type {
+  border-bottom: none;
+}
+
+.menu-div * {
+  padding: 3px;
+  padding: 0.306rem;
+}
+
+.menu-heading {
+  padding-top: 0px;
+  border-bottom: 1px solid #000;
 }
 
 .main-menu-text-p {
@@ -81,12 +97,6 @@ header, .toolbar, #main-menu{
 .setting-tainer {
   margin-top: 16px;
   margin-top: 1.625rem;
-  border-top: 1px solid #000;
-}
-
-.setting-tainer h5 {
-  margin-bottom: 6px;
-  margin-bottom: 0.611rem;
 }
 
 .mCSB_container {

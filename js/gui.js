@@ -1,11 +1,14 @@
 (function () {
 
-  // #container is set to the size of the window
-  // so draggables can snap to the edge of the screen
+// #container is set to the size of the window
+// so draggables can snap to the edge of the screen
   $(window).on('resize load', function (event) {
     var tainer = $('#container')
-    tainer.height($(window).height())
-    tainer.width($(window).width())
+      , $win = $(window)
+    tainer.height($win.height())
+    tainer.width($win.width())
+
+    $('#webgl-canvas').width($win.width()).height($win.width() / 16 * 9)
   })
 
   // Save emitters opts to local storage on unload
@@ -28,7 +31,7 @@
 
   $(document).ready(function () {
 
-    // If an error occured during last unload, log it
+// If an error occured during last unload, log it
     if (localStorage.getItem('unloaderror'))
       console.log('unload error: ' + localStorage.getItem('unloaderror'))
     /*
@@ -41,12 +44,15 @@
      }
      */
 
-    // Set initial size of canvas
-    $('#webgl-canvas').width(($(document).width() < 1000) ? $(document).width() : 1000)
+    // create canvas and container
+    $('<div>').attr('id', 'container').appendTo($('body'))
+    $('<canvas style="border: none;" width="1920" height="1080">')
+      .attr('id', 'webgl-canvas')
+      .appendTo($('#container'))
 
     // call the effect engine, passing canvas, opts and callback
     engine($('#webgl-canvas')[0], null, function (effect, guiCallback) {
-      // Get gui default settings
+// Get gui default settings
       var defaultReq = new XMLHttpRequest()
 
       defaultReq.onload = function () {
@@ -86,9 +92,12 @@
         toolbar(effect.emitters, opts, true)
       }
 
-      // build the header and main menu
-      $('<div>').attr('id', 'main-menu').prependTo('body')
+// build the header and main menu            
+
+// page header
       $('<header>').attr('id', 'header').text('WebGL PEE').prependTo('body')
+
+      // main menu button
       $('<a>').attr('id', 'main-menu-anchor').appendTo('#header')
         .click(function (event) {
         if ($('#main-menu').css('visibility') === 'hidden')
@@ -103,12 +112,17 @@
         width: 16
       }).appendTo('#main-menu-anchor')
 
-      $('#main-menu').append('<h4>Textures</h4>')
+      // main menu
+      var mainMenu = $('<div>').attr('id', 'main-menu')
+      mainMenu.prependTo('body')
+      var textDiv = $('<div>').addClass('menu-div').attr('id', 'text-div')
+        .appendTo(mainMenu)
+        .append('<h4 class="menu-heading">Textures</h4>')
       for (var i = 0; i < effect.emitters.length; i++) {
         var tp = $('<p>')
           , inp = $('<input>')
           , img = $('<img>')
-        tp.addClass('main-menu-text-p').text(effect.emitters[i].name).appendTo('#main-menu')
+        tp.addClass('main-menu-text-p').text(effect.emitters[i].name).appendTo(textDiv)
         // file input tag
         inp.attr('type', 'file').css('display', 'none').appendTo(tp)
         // replace menu image with selected image
@@ -133,7 +147,7 @@
           reader.onload = (function (aImg) {
             return function (e) {
               aImg.onload = function (event) {
-                //replace the emitter texture with the new image                
+//replace the emitter texture with the new image                
                 effect.textureManager('replace')(aImg, $self.data('index'))
               }
               aImg.src = e.target.result;
@@ -163,11 +177,61 @@
           .click(function (event) {
           $(this).data('input').click()
         })
-
       }
+// file actions
+      fileActions = $('<div id="file-actions">').addClass('menu-div')
+      mainMenu.append(fileActions)
+      fileActions
+        .append('<h4 class="menu-heading">File Actions</h4>')
+        .append('<button id="save-btn">')
+        .append('<button id="load-btn">')
+        .append('<input id="load-input">')
+
+      $('#save-btn').text('Save Effect').click(function (event) {
+        try {
+          var emitters = $('.toolbar').first().data().emitter.effect.emitters
+            , save = []
+            , json
+            , blob
+
+          for (var i = 0; i < emitters.length; i++) {
+            save.push(emitters[i].opts)
+          }
+
+          json = JSON.stringify(save, undefined, 2)
+
+          blob = new Blob([json], {type: 'application/json'})
+          saveAs(blob, "effect.json")
+        } catch (e) {
+          console.error('error saving effect.\n%o\n%o', emitters, save)
+        }
+      })
+      $('#load-btn').text('Load Effect').click(function (event) {
+        $('#load-input').click()
+      })
+      $('#load-input').css('display', 'none').attr('type', 'file').on('change', function (event) {
+        var emitters = $('.toolbar').first().data().emitter.effect.emitters
+          , file = this.files[0]
+          // = JSON.parse(file)
+          , reader = new FileReader()
+        reader.onload = function (event) {
+          $('#load-btn').text(file.name)
+          var effectData = JSON.parse(event.currentTarget.result)
+          console.log(emitters)
+          emitters.length = effectData.length
+          for (var i = 0; i < effectData.length; i++) {            
+            for (var opt in effectData[i]) {
+              emitters[i][opt] = effectData[i][opt]
+            }
+          }
+        }
+        reader.readAsText(file)
+      })
+
       guiCallback()
     })
   })
+
 
   // toolbar builder
   function toolbar (emitter, opts, master) {
