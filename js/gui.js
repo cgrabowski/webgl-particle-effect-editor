@@ -45,7 +45,7 @@
     $('#webgl-canvas').width(($(document).width() < 1000) ? $(document).width() : 1000)
 
     // call the effect engine, passing canvas, opts and callback
-    engine($('#webgl-canvas')[0], null, function (effect) {
+    engine($('#webgl-canvas')[0], null, function (effect, guiCallback) {
       // Get gui default settings
       var defaultReq = new XMLHttpRequest()
 
@@ -165,6 +165,7 @@
         })
 
       }
+      guiCallback()
     })
   })
 
@@ -199,6 +200,9 @@
       zStack.unshift(this)
       if (zStack.length > $('.toolbar').length)
         zStack.pop()
+
+      // prevent world transforms when interacting with toolbar
+      return false;
     })
 
     $('<div class="toolbar-header">' + ((master) ? "master" : emitter.name) +
