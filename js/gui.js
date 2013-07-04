@@ -1,34 +1,7 @@
 (function () {
-  var toolbarStack = []
-
-// #container is set to the size of the window
-// so draggables can snap to the edge of the screen
-  $(window).on('resize load', function (event) {
-    var tainer = $('#container')
-      , $win = $(window)
-    tainer.height($win.height())
-    tainer.width($win.width())
-
-    $('#webgl-canvas').width($win.width()).height($win.width() / 16 * 9)
-  })
-
-  // Save emitters opts to local storage on unload
-  // Save any errors when unloading the window so they can be read onload
-  $(window).unload(function (event) {
-    localStorage.setItem('unloaderror', "no error")
-    try {
-      var emitters = $('.toolbar').first().data().emitter.effect.emitters
-        , optsArray = []
-
-      for (var i = 0; i < emitters.length; i++) {
-        optsArray.push(emitters[i].opts)
-      }
-
-      localStorage.setItem('opts', JSON.stringify(optsArray))
-    } catch (e) {
-      localStorage.setItem('unloaderror', e.message)
-    }
-  })
+  var effect
+    , emitters
+    , toolbarStack = []
 
   $(document).ready(function () {
 
@@ -52,7 +25,9 @@
       .appendTo($('#container'))
 
     // call the effect engine, passing canvas, opts and callback
-    engine($('#webgl-canvas')[0], null, function (effect, render) {
+    engine($('#webgl-canvas')[0], null, function (eff, render) {
+      effect = eff
+      emitters = effect.emitters
 // Get gui default settings
       var defaultReq = new XMLHttpRequest()
 
@@ -67,7 +42,7 @@
         var tbOpts = JSON.parse(res)
 
         // Build toolbars using default gui opts and emitter opts
-        for (var i = 0; i < effect.emitters.length; i++) {
+        for (var i = 0; i < emitters.length; i++) {
           var opts = {}
 
           for (var opt in tbOpts) {
@@ -80,158 +55,185 @@
               // Initial slider value comes from emitters opts
               opts[opt][val] = new Array(3)
               opts[opt][val][0] = tbOpts[opt][val][0]
-              opts[opt][val][1] = effect.emitters[i].opts[val]
+              opts[opt][val][1] = emitters[i].opts[val]
               opts[opt][val][2] = tbOpts[opt][val][1]
             }
           }
 
           // create individual toolbar emitters
-          toolbar(effect.emitters[i], opts)
+          toolbar(emitters[i], opts)
         }
 
         // create the master toolbar (it affects all emitters)
-        toolbar(effect.emitters, opts, true)
+        toolbar(emitters, opts, true)
+
+        // build the main menu and begin rendering when it is complete
+        mainMenu(render)
       }
-
-// build the header and main menu            
-
-// page header
-      $('<header>').attr('id', 'header').text('WebGL PEE').prependTo('body')
-
-      // main menu button
-      $('<a>').attr('id', 'main-menu-anchor').appendTo('#header')
-        .click(function (event) {
-        if ($('#main-menu').css('visibility') === 'hidden')
-          $('#main-menu').css('visibility', 'visible')
-        else
-          $('#main-menu').css('visibility', 'hidden')
-        return false;
-      })
-      $('<img>').attr({
-        src: 'images/gui-gear-grey.png',
-        height: 16,
-        width: 16
-      }).appendTo('#main-menu-anchor')
-
-      // main menu
-      var mainMenu = $('<div>').attr('id', 'main-menu')
-      mainMenu.prependTo('body')
-      var textDiv = $('<div>').addClass('menu-div').attr('id', 'text-div')
-        .appendTo(mainMenu)
-        .append('<h4 class="menu-heading">Textures</h4>')
-      for (var i = 0; i < effect.emitters.length; i++) {
-        var tp = $('<p>')
-          , inp = $('<input>')
-          , img = $('<img>')
-        tp.addClass('main-menu-text-p').text(effect.emitters[i].name).appendTo(textDiv)
-        // file input tag
-        inp.attr('type', 'file').css('display', 'none').appendTo(tp)
-        // replace menu image with selected image
-        inp.on('change', function (event) {
-          var file = this.files[0]
-            , newImg = $('<img>')
-            , $self = $(this)
-          newImg.attr({
-            height: 32,
-            width: 32
-          }).addClass('text-p-img')
-            .click(function (event) {
-            $self.click()
-          })
-          newImg.get(0).file = file
-          $self.data('img').remove()
-          $self.data('img', newImg)
-          $self.data('p').append(newImg)
-
-          // read the image into the img tag
-          var reader = new FileReader()
-          reader.onload = (function (aImg) {
-            return function (e) {
-              aImg.onload = function (event) {
-//replace the emitter texture with the new image                
-                effect.textureManager('replace')(aImg, $self.data('index'))
-              }
-              aImg.src = e.target.result;
-            };
-          })(newImg.get(0));
-          reader.readAsDataURL(file);
-        })
-        // since input is display:hidden, its coresponding menu image
-        // is saved as jquery data
-        inp.data('img', img)
-        // as well as its corresponding p tag
-        inp.data('p', tp)
-        // and the coresponing emitter
-        inp.data('emitter', effect.emitters[i])
-        inp.data('index', i)
-        // likewise, the menu images' coresponding input tag
-        // is saved as jquery data
-        img.data('input', inp)
-        img.attr({
-          src: effect.emitters[i].textSource,
-          height: 32,
-          width: 32
-        })
-          .addClass('text-p-img').appendTo(tp)
-          // when the image is clicked, the input's
-          // click event is triggered
-          .click(function (event) {
-          $(this).data('input').click()
-        })
-      }
-// file actions
-      fileActions = $('<div id="file-actions">').addClass('menu-div')
-      mainMenu.append(fileActions)
-      fileActions
-        .append('<h4 class="menu-heading">File Actions</h4>')
-        .append('<button id="save-btn">')
-        .append('<button id="load-btn">')
-        .append('<input id="load-input">')
-
-      $('#save-btn').text('Save Effect').click(function (event) {
-        try {
-          var emitters = $('.toolbar').first().data().emitter.effect.emitters
-            , save = []
-            , json
-            , blob
-
-          for (var i = 0; i < emitters.length; i++) {
-            save.push(emitters[i].opts)
-          }
-
-          json = JSON.stringify(save, undefined, 2)
-
-          blob = new Blob([json], {type: 'application/json'})
-          saveAs(blob, "effect.json")
-        } catch (e) {
-          console.error('error saving effect.\n%o\n%o', emitters, save)
-        }
-      })
-      $('#load-btn').text('Load Effect').click(function (event) {
-        $('#load-input').click()
-      })
-      $('#load-input').css('display', 'none').attr('type', 'file').on('change', function (event) {
-        var emitters = $('.toolbar').first().data().emitter.effect.emitters
-          , file = this.files[0]
-          // = JSON.parse(file)
-          , reader = new FileReader()
-        reader.onload = function (event) {
-          $('#load-btn').text(file.name)
-          var effectData = JSON.parse(event.currentTarget.result)
-          console.log(emitters)
-          emitters.length = effectData.length
-          for (var i = 0; i < effectData.length; i++) {
-            for (var opt in effectData[i]) {
-              emitters[i][opt] = effectData[i][opt]
-            }
-          }
-        }
-        reader.readAsText(file)
-      })
-
-      render()
     })
   })
+
+  // #container is set to the size of the window
+// so draggables can snap to the edge of the screen
+  $(window).on('resize load', function (event) {
+    var tainer = $('#container')
+      , $win = $(window)
+    tainer.height($win.height())
+    tainer.width($win.width())
+  })
+
+  // Save emitters opts to local storage on unload
+  // Save any errors when unloading the window so they can be read onload
+  $(window).unload(function (event) {
+    localStorage.setItem('unloaderror', "no error")
+    var optsArray = []
+    for (var i = 0; i < emitters.length; i++) {
+      optsArray.push(emitters[i].opts)
+    }
+    try {
+      localStorage.setItem('opts', JSON.stringify(optsArray))
+    } catch (e) {
+      localStorage.setItem('unloaderror', e.message)
+    }
+  })
+
+// build the header and main menu            
+  function mainMenu (callback) {
+// page header
+    $('<header>').attr('id', 'header').text('WebGL PEE').prependTo('body')
+
+    // main menu button
+    $('<a>').attr('id', 'main-menu-anchor').appendTo('#header')
+      .click(function (event) {
+      if ($('#main-menu').css('visibility') === 'hidden')
+        $('#main-menu').css('visibility', 'visible')
+      else
+        $('#main-menu').css('visibility', 'hidden')
+      return false;
+    })
+    $('<img>').attr({
+      src: 'images/gui-gear-grey.png',
+      height: 16,
+      width: 16
+    }).appendTo('#main-menu-anchor')
+
+    // main menu
+    var mainMenu = $('<div>').attr('id', 'main-menu')
+    mainMenu.prependTo('body')
+    var textDiv = $('<div>').addClass('menu-div').attr('id', 'text-div')
+      .appendTo(mainMenu)
+      .append('<h4 class="menu-heading">Textures</h4>')
+    for (var i = 0; i < emitters.length; i++) {
+      var tp = $('<p>')
+        , inp = $('<input>')
+        , img = $('<img>')
+      tp.addClass('main-menu-text-p').text(emitters[i].name).appendTo(textDiv)
+      // file input tag
+      inp.attr('type', 'file').css('display', 'none').appendTo(tp)
+      // replace menu image with selected image
+      inp.on('change', function (event) {
+        var file = this.files[0]
+          , newImg = $('<img>')
+          , $self = $(this)
+        newImg.attr({
+          height: 32,
+          width: 32
+        }).addClass('text-p-img')
+          .click(function (event) {
+          $self.click()
+        })
+        newImg.get(0).file = file
+        $self.data('img').remove()
+        $self.data('img', newImg)
+        $self.data('p').append(newImg)
+
+        // read the image into the img tag
+        var reader = new FileReader()
+        reader.onload = (function (aImg) {
+          return function (e) {
+            aImg.onload = function (event) {
+//replace the emitter texture with the new image                
+              effect.textureManager('replace')(aImg, $self.data('index'))
+            }
+            aImg.src = e.target.result;
+          };
+        })(newImg.get(0));
+        reader.readAsDataURL(file);
+      })
+      // since input is display:hidden, its coresponding menu image
+      // is saved as jquery data
+      inp.data('img', img)
+      // as well as its corresponding p tag
+      inp.data('p', tp)
+      // and the coresponing emitter
+      inp.data('emitter', emitters[i])
+      inp.data('index', i)
+      // likewise, the menu images' coresponding input tag
+      // is saved as jquery data
+      img.data('input', inp)
+      img.attr({
+        src: emitters[i].textSource,
+        height: 32,
+        width: 32
+      })
+        .addClass('text-p-img').appendTo(tp)
+        // when the image is clicked, the input's
+        // click event is triggered
+        .click(function (event) {
+        $(this).data('input').click()
+      })
+    }
+// file actions
+    fileActions = $('<div id="file-actions">').addClass('menu-div')
+    mainMenu.append(fileActions)
+    fileActions
+      .append('<h4 class="menu-heading">File Actions</h4>')
+      .append('<button id="save-btn">')
+      .append('<button id="load-btn">')
+      .append('<input id="load-input">')
+
+    $('#save-btn').text('Save Effect').click(function (event) {
+      try {
+        var save = []
+          , json
+          , blob
+
+        for (var i = 0; i < emitters.length; i++) {
+          save.push(emitters[i].opts)
+        }
+
+        json = JSON.stringify(save, undefined, 2)
+
+        blob = new Blob([json], {type: 'application/json'})
+        saveAs(blob, "effect.json")
+      } catch (e) {
+        console.error('error saving effect.\n%o\n%o', emitters, save)
+      }
+    })
+    $('#load-btn').text('Load Effect').click(function (event) {
+      $('#load-input').click()
+    })
+    $('#load-input').css('display', 'none').attr('type', 'file').on('change', function (event) {
+      var file = this.files[0]
+        // = JSON.parse(file)
+        , reader = new FileReader()
+      reader.onload = function (event) {
+        $('#load-btn').text(file.name)
+        var effectData = JSON.parse(event.currentTarget.result)
+        console.log(emitters)
+        emitters.length = effectData.length
+        for (var i = 0; i < effectData.length; i++) {
+          for (var opt in effectData[i]) {
+            emitters[i][opt] = effectData[i][opt]
+          }
+        }
+      }
+      reader.readAsText(file)
+    })
+
+    callback()
+  }
+
 
 
   // toolbar builder
@@ -246,7 +248,7 @@
 
     tb.draggable({snap: '#header, #container, .toolbar'})
       .addClass('toolbar')
-      .appendTo('#container')
+      .prependTo('#container')
       .css({
       position: 'absolute',
       right: '0px',
@@ -499,13 +501,13 @@
       })
     }
 
-        // pressing enter closes an open limit input 
-        $(window).on('keypress', function detectKey (event) {
-          if (event.keyCode === 13) { // Enter            
-            $(window).off('keypress', detectKey)
-            $('body').click()
-          }
-        })
+    // pressing enter closes an open limit input 
+    $(window).on('keypress', function detectKey (event) {
+      if (event.keyCode === 13) { // Enter            
+        $(window).off('keypress', detectKey)
+        $('body').click()
+      }
+    })
 
     // add custom scrollbar and resizable plugins
     tb.mCustomScrollbar({
@@ -527,4 +529,5 @@
     tb.find('.toolbar-header').width(tb.width() - 6)
     tb.find('.mCSB_draggerContainer').css('top', '35px')
   }
+
 }())
