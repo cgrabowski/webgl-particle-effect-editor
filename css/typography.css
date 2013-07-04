@@ -2,13 +2,9 @@
  * Bow to the golden mean rem CSS!
  */
 
-html {
-  font-size: 62.5%;
-}
-
 body {
   font-family: Verdana, Geneva, sans-serif;
-  font-size: 10px;
+  font-size: 12px;
   font-size: 1rem;
   line-height: 1.625;
   letter-spacing: 1px;
@@ -19,16 +15,17 @@ header, h1, h2, h3, h4, h5 {
 }
 
 header, h1, h2 {
-  font-size: 16px;
-  font-size: 1.625rem;
+  font-size: 18px;
+  font-size: 1.5rem;
 }
 
 h3, h4 {
   font-size: 14px;
-  font-size: 1.4rem;
+  font-size: 1.167rem;
 }
 
 h5, div, p, span, tr, li {
-  font-size: 10px;
+  font-family: Verdana, Geneva, sans-serif;
+  font-size: 12px;
   font-size: 1rem;
 }

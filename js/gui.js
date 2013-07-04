@@ -1,4 +1,5 @@
 (function () {
+  var toolbarStack = []
 
 // #container is set to the size of the window
 // so draggables can snap to the edge of the screen
@@ -51,7 +52,7 @@
       .appendTo($('#container'))
 
     // call the effect engine, passing canvas, opts and callback
-    engine($('#webgl-canvas')[0], null, function (effect, guiCallback) {
+    engine($('#webgl-canvas')[0], null, function (effect, render) {
 // Get gui default settings
       var defaultReq = new XMLHttpRequest()
 
@@ -219,7 +220,7 @@
           var effectData = JSON.parse(event.currentTarget.result)
           console.log(emitters)
           emitters.length = effectData.length
-          for (var i = 0; i < effectData.length; i++) {            
+          for (var i = 0; i < effectData.length; i++) {
             for (var opt in effectData[i]) {
               emitters[i][opt] = effectData[i][opt]
             }
@@ -228,14 +229,18 @@
         reader.readAsText(file)
       })
 
-      guiCallback()
+      render()
     })
   })
 
 
   // toolbar builder
   function toolbar (emitter, opts, master) {
+
     var tb = $('<div>')
+
+    if (master)
+      tb.data('master', true)
 
     tb.data('emitter', emitter)
 
@@ -248,26 +253,29 @@
       top: $('header').height()
     })
 
-      // toolbar z-indexes are a first-in, last-out stack
-      .mousedown(function (event) {
+    if (master) {
+      tb.css('left', '0px')
+    }
+    // toolbar z-indexes are a first-in, last-out stack
+    tb.mousedown(function (event) {
       var self = this
-        , zStack = toolbar.zStack
 
-      zStack.forEach(function (val, ind, arr) {
-        if (zStack[ind] === self)
-          zStack.splice(ind, 1)
+      toolbarStack.forEach(function (val, ind, arr) {
+        if (toolbarStack[ind] === self)
+          toolbarStack.splice(ind, 1)
         else
-          $(zStack[ind]).css('z-index', $(zStack[ind]).css('z-index') - 1)
+          $(toolbarStack[ind]).css('z-index', $(toolbarStack[ind]).css('z-index') - 1)
       })
 
       $(this).css('z-index', 100)
-      zStack.unshift(this)
-      if (zStack.length > $('.toolbar').length)
-        zStack.pop()
+      toolbarStack.unshift(this)
+      if (toolbarStack.length > $('.toolbar').length)
+        toolbarStack.pop()
 
       // prevent world transforms when interacting with toolbar
       return false;
-    })
+    }
+    )
 
     $('<div class="toolbar-header">' + ((master) ? "master" : emitter.name) +
       '<a href="" class="close"><img src="images/gui-close-grey.png"></a>' +
@@ -408,15 +416,106 @@
       }
 
       sliderTainer.closest('.setting-tainer').prepend(minSpan).prepend(maxSpan)
+
+
+      // change slider limits on click
+      sliderTainer.siblings('span').click(function limitClick (event) {
+        console.log(this)
+        var $this = $(this)
+          , $input = $('<input class="limit-input" name="" value="' + $this.text() + '">')
+          , emitter = $this.closest('.toolbar').data().emitter
+          , key = $this.closest('.setting-tainer').data().key
+
+        // these classes identify an input as a min or max input
+        if ($this.hasClass('min-span'))
+          $input.addClass('limit-input-left')
+        else
+          $input.addClass('limit-input-right')
+
+        $this.replaceWith($input)
+
+        // close input when anything is clicked
+        $('body, span, a').one('click', function setLimit (event) {
+          var sl = $input.siblings('.ui-slider')
+            , newLimit = parseFloat($input.val().replace(/^[^-][^0-9\.]/g, ""))
+
+          // check if val is NaN
+          if (!(newLimit < Infinity))
+            newLimit = $this.text()
+
+          if ($input.hasClass('limit-input-left')) {
+            console.log('min, ' + newLimit)
+            sl.slider('option', 'min', newLimit)
+          } else {
+            console.log('max, ' + newLimit)
+            sl.slider('option', 'max', newLimit)
+          }
+
+          // set new emitter opt value(s)
+
+          // for emitters with min and max (two slider handles)  
+          if (sl.slider('values').length === 2) {
+            var vals = sl.slider('values')
+            sl.find('.ui-slider-handle:nth-child(2)').attr('title', vals[0])
+            sl.find('.ui-slider-handle:last-child').attr('title', vals[1])
+            if (master) {
+              for (var i = 0; i < emitter.length; i++) {
+                emitter[i][key[0]] = vals[0]
+                emitter[i][key[1]] = vals[1]
+              }
+            } else {
+              emitter[key[0]] = vals[0]
+              emitter[key[1]] = vals[1]
+            }
+
+            // for emitters with one val (one slider handle)
+          } else {
+            var val = sl.slider('value')
+            sl.find('.ui-slider-handle:last-child').attr('title', val)
+            if (master) {
+              for (var i = 0; i < emitter.length; i++) {
+                emitter[i][key] = val
+              }
+            } else {
+              emitter[key] = val
+            }
+          }
+
+          // update span and replace input with it
+          $this.text(newLimit)
+          $input.replaceWith($this)
+
+          // this handler should only be in use when a limit input is open
+          $('body, span, a').off('click', setLimit)
+
+          // the span needs to have its click handler reassigned
+          $this.click(limitClick)
+
+          return false
+        })
+
+        $input[0].focus()
+        return false
+      })
     }
 
+        // pressing enter closes an open limit input 
+        $(window).on('keypress', function detectKey (event) {
+          if (event.keyCode === 13) { // Enter            
+            $(window).off('keypress', detectKey)
+            $('body').click()
+          }
+        })
+
+    // add custom scrollbar and resizable plugins
     tb.mCustomScrollbar({
       advanced: {
         updateOnContentResize: true
       }})
 
-    tb.find('.setting-tainer').first().css('padding-top', '15px')
-    tb.find('.setting-tainer').last().css('padding-bottom', '5px')
+    tb.find('.setting-tainer').first().css('padding-top', '24px')
+    tb.find('.setting-tainer').last().css('padding-bottom', '12px')
+
     tb.resizable({
       handles: 's, e, w',
       minWidth: 175,
@@ -428,7 +527,4 @@
     tb.find('.toolbar-header').width(tb.width() - 6)
     tb.find('.mCSB_draggerContainer').css('top', '35px')
   }
-
-  // toolbar z-index stack
-  toolbar.zStack = []
 }())
