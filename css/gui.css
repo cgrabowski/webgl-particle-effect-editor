@@ -1,159 +1,159 @@
 html, body {
-  font-size: 12px;
-  width: 100%;
-  height: 100%;
+    font-size: 12px;
+    width: 100%;
+    height: 100%;
 }
 
 body {
-  color: #E0E0E0;
-  background: #000;
-  overflow: hidden;
+    color: #E0E0E0;
+    background: #000;
+    overflow: hidden;
 }
 
 header {
-  padding-left: 5px;
-  border-bottom: 1px solid #000;
+    padding-left: 5px;
+    border-bottom: 1px solid #000;
 }
 
 button {
-  color: #E0E0E0;
-  border: 3px solid #000;
+    color: #E0E0E0;
+    border: 3px solid #000;
 }
 
-header, .toolbar, #main-menu, button, input {    
-  background:#404040;
+header, .toolbar, #options-menu, button, input {    
+    background:#404040;
 }
 
 #container {
-  width: 75%;
-  margin: 0px auto;
-  text-align: center;
+    width: 75%;
+    margin: 0px auto;
+    text-align: center;
 }
 
-#main-menu {
-  visibility: hidden;
-  position: absolute;
-  right: 0px;
-  top: 27px;
-  z-index: 1000000;
-  width: 25%;
-  padding-top: 0px;
+#options-menu {
+    visibility: hidden;
+    position: absolute;
+    right: 0px;
+    top: 27px;
+    z-index: 1000000;
+    width: 25%;
+    padding-top: 0px;
 }
 
-#main-menu p {
-  border-bottom: 1px solid black;
+#options-menu p {
+    border-bottom: 1px solid black;
 }
 
 .menu-div {
-  border-bottom: 10px solid #000;
+    border-bottom: 10px solid #000;
 }
 
 .menu-div:last-of-type {
-  border-bottom: none;
+    border-bottom: none;
 }
 
 .menu-div * {
-  padding: 3px;
-  padding: 0.25rem;
+    padding: 3px;
+    padding: 0.25rem;
 }
 
 .menu-heading {
-  padding-top: 0px;
-  border-bottom: 1px solid #000;
+    padding-top: 0px;
+    border-bottom: 1px solid #000;
 }
 
-.main-menu-text-p {
-  height: 40px;
-  clear: right;
+.options-menu-text-p {
+    height: 40px;
+    clear: right;
 }
 
 .text-p-img {
-  float: right;
+    float: right;
 }
 
 .toolbar {
-  width: 200px;
-  height: 312px;
-  padding-bottom: 12px;
-  padding-bottom: 1rem;
-  padding-left: 6px;
-  padding-left: 0.5rem;
-  border: 1px solid black;
+    width: 200px;
+    height: 312px;
+    padding-bottom: 12px;
+    padding-bottom: 1rem;
+    padding-left: 6px;
+    padding-left: 0.5rem;
+    border: 1px solid black;
 }
 
 .toolbar-header {
-  font-family: "Book Antiqua", Palatino, serif;
-  font-size: 16px;
-  font-size: 1.333rem;
-  cursor: move;
-  padding-left: 6px;
-  padding-left: 0.5rem;
-  padding-top: 4px;
-  padding-top: 0.333rem;
-  text-align: left;
-  position: fixed;
-  width: 180px;
-  border-bottom: 1px solid black;
-  background: #404040;
-  z-index: 3;
+    font-family: "Book Antiqua", Palatino, serif;
+    font-size: 16px;
+    font-size: 1.333rem;
+    cursor: move;
+    padding-left: 6px;
+    padding-left: 0.5rem;
+    padding-top: 4px;
+    padding-top: 0.333rem;
+    text-align: left;
+    position: fixed;
+    width: 180px;
+    border-bottom: 1px solid black;
+    background: #404040;
+    z-index: 3;
 }
 
 .setting-tainer {
-  margin-top: 16px;
-  margin-top: 1.5rem;
+    margin-top: 16px;
+    margin-top: 1.5rem;
 }
 
 .mCSB_container {
-  margin-right: 16px;
-  margin-right: 1.333rem;
+    margin-right: 16px;
+    margin-right: 1.333rem;
 }
 
 .ui-slider {
-  margin-left: 6px;
-  margin-left: 0.5rem;
-  margin-right: 6px;
-  margin-right: 0.5rem;
-  background: #A0A0A0;
+    margin-left: 6px;
+    margin-left: 0.5rem;
+    margin-right: 6px;
+    margin-right: 0.5rem;
+    background: #A0A0A0;
 }
 
 .ui-slider-handle {
-  background: #E0E0E0;
+    background: #E0E0E0;
 }
 
-.toolbar-header a, #main-menu-anchor{
-  float: right;
-  margin: 1px;
+.toolbar-header a, #options-menu-anchor{
+    float: right;
+    margin: 1px;
 }
 
-#main-menu-anchor {
-  padding: 3px;
+#options-menu-anchor {
+    padding: 3px;
 }
 
 .min-span, .max-span{
-  position: absolute;
+    position: absolute;
 }
 
 .min-span {
-  left: 0px;
+    left: 0px;
 }
 
 .max-span {
-  right: 0px;
+    right: 0px;
 }
 
 .limit-input {
-  color: #FFF;
-  width: 33%;
-  position: absolute;
-  z-index: 101;
-  border: none;
+    color: #FFF;
+    width: 33%;
+    position: absolute;
+    z-index: 101;
+    border: none;
 }
 
-.limit-input-left {
-  left: 0px;
+.limit-input-min {
+    left: 0px;
 }
 
-.limit-input-right {
-  right: 0px;
-  text-align: right;
+.limit-input-max {
+    right: 0px;
+    text-align: right;
 }
