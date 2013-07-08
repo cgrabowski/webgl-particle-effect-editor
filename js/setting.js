@@ -108,7 +108,7 @@ PEE.setting = (function ($, window, undefined) {
                     newLimit = $this.text();
                 }
 
-                if ($input.hasClass('limit-input-left')) {
+                if ($input.hasClass('limit-input-min')) {
                     console.log('min, ' + newLimit);
                     sl.slider('option', 'min', newLimit);
                 } else {
