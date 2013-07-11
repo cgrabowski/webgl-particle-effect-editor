@@ -3,9 +3,10 @@ PEE = PEE || {};
 PEE.settingGraph = (function ($, window, undefined) {
 
     return function (settingTainer, min, max, key, val, name, master) {
+        var emitter = settingTainer.closest('.toolbar').data('emitter'),
+            setting = settingTainer.data('key');
 
         var slider = settingTainer.find('.ui-slider'),
-            rect = $('<rect>'),
             $svg = $(svg('svg')),
             $rect = $(svg('rect')),
             ht = settingTainer.height() * 3,
@@ -60,10 +61,11 @@ PEE.settingGraph = (function ($, window, undefined) {
         slider.siblings('span').css('visibility', 'hidden');
         slider.replaceWith($svg);
 
-        plotPoint($svg, 2, ht * 0.25);
-        plotPoint($svg, wt - 2, ht * 0.25);
-        plotPoint($svg, 2, ht * 0.75);
-        plotPoint($svg, wt - 2, ht * 0.75);
+        var emit = (typeof(emitter) === 'array') ? emitter[0] : emitter
+        plotPoint($svg, 2, ht - 4, 'minpoint');
+        plotPoint($svg, wt - 2, 0, 'minpoint');
+        plotPoint($svg, 2, ht - 2, 'maxpoint');
+        plotPoint($svg, wt - 2, 2, 'maxpoint');
 
         connectTheDots($svg, 'max');
         connectTheDots($svg, 'min');
@@ -81,64 +83,115 @@ PEE.settingGraph = (function ($, window, undefined) {
                         connectTheDots($svg, type);
                     }
                 } else {
-                    $movingCircle = $(event.target);
+                    $movingPoint = $(event.target);
                 }
-            } else {
+            } else if (event.which !== 3) {
                 var $point = plotPoint($svg, event.offsetX, event.offsetY),
                     type = $point[0].classList.contains('maxpoint') ? 'max' : 'min';
 
                 connectTheDots($svg, type);
-                $movingCircle = $point;
+                $movingPoint = $point;
             }
 
             return false;
         });
 
         $svg.on('mousemove', function (event) {
-            moveCircle(event);
             event.stopImmediatePropagation();
+            movePoint(event);
+
+
+            //[x1, y1, und, und, x2, y2, V m, b, x2, y2, V m, b, [...]]
+
+
+            for (var i = 0; i < emitter.length; i++) {
+                var min = emitter[i][setting[0] + 'Test'] = [],
+                    max = emitter[i][setting[1] + 'Test'] = [];
+                    
+                $svg.find('.minpoint').each(function (index, element) {
+                    min[index * 4] = element.getAttribute('cx') / $svg.width();
+                    min[index * 4 + 1] = ($svg.height() - element.getAttribute('cy')) / $svg.height() * 2 - 1;
+                });
+
+                var len = min.length,
+                    stride = len / 2 - 2;
+
+                for (var k = len; k >= 6; k -= 4) {
+                    // slope
+                    min[k] = (min[k - 1] - min[k - 5]) / (min[k - 2] - min[k - 6]);
+                    //min[k] = 'm';
+                    
+                    // y intercept
+                    min[k + 1] = -(min[k] * min[k - 2] - min[k - 1]);
+                    //min[k + 1] = 'b';
+                }
+
+                $svg.find('.maxpoint').each(function (index, element) {
+                    max[index * 4] = element.getAttribute('cx') / $svg.width();
+                    max[index * 4 + 1] = ($svg.height() - element.getAttribute('cy')) / $svg.height() * 2 - 1;
+                });
+
+                var len = max.length,
+                    stride = len / 2 - 2;
+
+                for (var k = len; k >= 6; k -= 4) {
+                    // slope
+                    max[k] = (max[k - 1] - max[k - 5]) / (max[k - 2] - max[k - 6]);
+                    //max[k] = 'm';
+                    
+                    // y intercept
+                    max[k + 1] = -(max[k] * max[k - 2] - max[k - 1]);
+                    //max[k + 1] = 'b';
+                }
+
+            }
+
             return false;
         }).on('mouseup', function (event) {
-            $movingCircle = null;
+            $movingPoint = null;
             return false;
         }).on('contextmenu', function (event) {
             return false;
         });
 
-        var $movingCircle;
-        function moveCircle (event) {
+        var $movingPoint;
+
+        function movePoint (event) {
             if ($svg.width() < event.offsetX + 2
                 || $svg.height() < event.offsetY + 2) {
-                $movingCircle = null;
+                $movingPoint = null;
             }
-            if ($movingCircle) {
+            if ($movingPoint) {
 
-                $movingCircle.attr('cy', event.offsetY);
+                $movingPoint.attr('cy', event.offsetY);
 
-                if ($movingCircle.data('lineR') && $movingCircle.data('lineL')) {
-                    $movingCircle.attr('cx', event.offsetX);
+                if ($movingPoint.data('lineR') && $movingPoint.data('lineL')) {
+                    $movingPoint.attr('cx', event.offsetX);
                 }
 
-                if ($movingCircle.data('lineR')) {
-                    $movingCircle.data('lineR').attr({
+                if ($movingPoint.data('lineR')) {
+                    $movingPoint.data('lineR').attr({
                         x1: event.offsetX,
                         y1: event.offsetY
                     });
                 }
-                if ($movingCircle.data('lineL')) {
-                    $movingCircle.data('lineL').attr({
+                if ($movingPoint.data('lineL')) {
+                    $movingPoint.data('lineL').attr({
                         x2: event.offsetX,
                         y2: event.offsetY
                     });
                 }
-                var type = $movingCircle[0].classList.contains('maxpoint') ? 'max' : 'min';
+                var type = $movingPoint[0].classList.contains('maxpoint') ? 'max' : 'min';
                 connectTheDots($svg, type);
             }
             return false;
         }
 
-        function plotPoint ($svg, cx, cy) {
-            var type = (cy < $svg.height() / 2) ? 'maxpoint' : 'minpoint';
+
+        function plotPoint ($svg, cx, cy, type) {
+            if (!type) {
+                type = (cy < $svg.height() / 2) ? 'maxpoint' : 'minpoint';
+            }
 
             var $newPoint = $(svg('circle')).attr({
                 class: type,
@@ -151,7 +204,6 @@ PEE.settingGraph = (function ($, window, undefined) {
             });
 
             $newPoint.appendTo($svg);
-
             return $newPoint;
         }
     };

@@ -164,7 +164,7 @@ PEE.setting = (function ($, window, undefined) {
             return false;
         });
 
-        if (name.match(/x offset|y offset|z offset/)) {
+        if (name.match(/direction x|direction y|direction z/)) {
             PEE.settingGraph(settingTainer, min, max, key, val, name, master)
         }
     }

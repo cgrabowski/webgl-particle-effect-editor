@@ -1,12 +1,12 @@
 {
   "name": "gui defaults",
   "num particles": {
-    "minParticles": [1, 1000],
-    "maxParticles": [1, 1000]
+    "minParticles": [1, 1],
+    "maxParticles": [300, 300]
   },
   "life": {
-    "minLife": [1, 10000],
-    "maxLife": [1, 10000]
+    "minLife": [1, 1],
+    "maxLife": [10000, 10000]
   },
   "duration": {
     "duration": [1, 10000]
@@ -35,8 +35,8 @@
     "maxSpeed": [1, 1000]
   },
   "direction x": {
-    "minDirX": [-1, 1],
-    "maxDirX": [-1, 1]
+    "minDirX": [0, 0],
+    "maxDirX": [0, 0]
   },
   "direction y": {
     "minDirY": [-1, 1],
