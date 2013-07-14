@@ -141,6 +141,12 @@ PEE.toolbar = (function ($, window, undefined) {
         tb.resizable({
             handles: 's, e, w',
             minWidth: 175,
+            start: function (event, ui) {
+                window.dispatchEvent(new CustomEvent('pause'));
+            },
+            stop: function(event, ui) {
+                window.dispatchEvent(new CustomEvent('resume'));
+            },
             resize: function (event, ui) {
                 ui.element.find('.toolbar-header').width(tb.width() - 6);
                 ui.element.mCustomScrollbar('update');
