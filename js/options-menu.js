@@ -6,7 +6,49 @@ PEE.optionsMenu = (function ($, window, undefined) {
     return function OptionsMenu (effect, emitters, callback) {
         var optionsMenu = $('<div>').attr('id', 'options-menu');
         optionsMenu.prependTo('body');
-        var textDiv = $('<div>').addClass('menu-div').attr('id', 'text-div')
+
+        // graph or slider
+        var graphOrSlider = $('<div>').addClass('menu-div-left')
+            .attr('id', 'settings-menu')
+            .appendTo(optionsMenu)
+            .append('<h4 class="menu-heading">Graph or Slider</h4>'),
+            graphables = ParticleEffect.GRAPHABLES;
+
+        for (var g = 0; g < graphables.length; g++) {
+            var sdp = $('<p>'),
+                sdsel = $('<select>');
+
+            sdp.addClass('options-menu-p')
+                .text(graphables[g])
+                .appendTo(graphOrSlider);
+
+            sdsel.addClass('menu-select')
+                .appendTo(sdp)
+                .append('<option value="slider">Slider</option>')
+                .append('<option value="graph">Graph</option>')
+                .data('name', graphables[g])
+                .click(function (event) {
+                var $this = $(this);
+                $('svg').each(function (index, element) {
+                    var $svg = $(element);
+                    if ($svg.data('name') === $this.data('name')) {
+                        if ($this.val() === 'graph') {
+                            $svg.data('slider').css('display', 'none').siblings('span').css('display', 'none');
+                            $svg.css('display', 'block');
+                        } else if ($this.val() === 'slider') {
+                            $svg.data('slider').css('display', 'block')
+                                .siblings('span').css('display', 'inline');
+                            $svg.css('display', 'none');
+                        }
+                    }
+
+                });
+            });
+        }
+
+        // textures
+        var textDiv = $('<div>').addClass('menu-div-right')
+            .attr('id', 'textures-div')
             .appendTo(optionsMenu)
             .append('<h4 class="menu-heading">Textures</h4>');
 
@@ -14,7 +56,10 @@ PEE.optionsMenu = (function ($, window, undefined) {
             var tp = $('<p>'),
                 inp = $('<input>'),
                 img = $('<img>')
-            tp.addClass('options-menu-text-p').text(emitters[i].name).appendTo(textDiv);
+            tp.addClass('options-menu-p')
+                .text(emitters[i].name)
+                .append('<img src="images/transparency.png" class="transparency-img">')
+                .appendTo(textDiv);
             // file input tag;
             inp.attr('type', 'file').css('display', 'none').appendTo(tp);
 
@@ -35,8 +80,9 @@ PEE.optionsMenu = (function ($, window, undefined) {
                 newImg.get(0).file = file;
                 $self.data('img').remove();
                 $self.data('img', newImg);
-                $self.data('p').append(newImg);
-                ;
+                //$self.data('p').append(newImg);
+                var timg = $self.data('p').find('.transparency-img');
+                newImg.insertAfter(timg);
                 // read the image into the img tag;
                 var reader = new FileReader();
                 reader.onload = (function (aImg) {
@@ -74,8 +120,60 @@ PEE.optionsMenu = (function ($, window, undefined) {
             });
         }
 
+        // emitters
+        var emittersMenu = $('<div>').addClass('menu-div-right')
+            .attr('id', 'emitters-div')
+            .appendTo(optionsMenu),
+            tbNames = [];
+
+        emitters.forEach(function (element, index, array) {
+            tbNames.push(element.name);
+        })
+        tbNames.unshift('master');
+
+        $('<h5>').addClass('menu-heading')
+            .text('Toolbars')
+            .appendTo(emittersMenu);
+        for (var i = 0; i < tbNames.length; i++) {
+            var tp = $('<p>').addClass('options-menu-p')
+                , tbSel = $('<select>');
+
+            tp.text(tbNames[i]).appendTo(emittersMenu);
+            tbSel.addClass('menu-select tb-select')
+                .appendTo(tp);
+            if (tbNames[i] === 'master') {
+                tbSel.append('<option value="show">Open</option>')
+                    .append('<option value="hide">Hidden</option>');
+            } else {
+                tbSel.append('<option value="hide">Hidden</option>')
+                    .append('<option value="show">Open</option>');
+            }
+            tbSel.data('toolbar-name', tbNames[i])
+                .click(function (event) {
+                var $this = $(this);
+
+                if ($this.val() === 'show') {
+                    $('.toolbar').each(function (index, element) {
+                        if ($(element).data('master') && $this.data('toolbar-name') === 'master') {
+                            $(element).css('visibility', 'visible');
+                        } else if ($(element).data('emitter').name === $this.data('toolbar-name')) {
+                            $(element).css('visibility', 'visible');
+                        }
+                    });
+                } else if ($this.val() === 'hide') {
+                    $('.toolbar').each(function (index, element) {
+                        if ($(element).data('master') && $this.data('toolbar-name') === 'master') {
+                            $(element).css('visibility', 'hidden');
+                        } else if ($(element).data('emitter').name === $this.data('toolbar-name')) {
+                            $(element).css('visibility', 'hidden');
+                        }
+                    });
+                }
+            });
+        }
+
         // file actions
-        var fileActions = $('<div id="file-actions">').addClass('menu-div');
+        var fileActions = $('<div id="file-actions">').addClass('menu-div-full');
         optionsMenu.append(fileActions);
         fileActions
             .append('<h4 class="menu-heading">File Actions</h4>')

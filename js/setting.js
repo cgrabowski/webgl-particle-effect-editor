@@ -7,9 +7,13 @@ PEE.setting = (function ($, window, undefined) {
         var settingTainer = $('<div>'),
             sliderTainer = $('<div>'),
             minSpan = $('<span class="min-span">'),
-            maxSpan = $('<span class="max-span">');
+            maxSpan = $('<span class="max-span">'),
+            minGraph = $('<span class="min-graph>'),
+            maxGraph = $('<span class="max-graph>');
 
-        settingTainer.addClass('setting-tainer').data('key', key)
+        settingTainer.addClass('setting-tainer')
+            .data('key', key)
+            .data('name', name)
             .appendTo(tb);
         $('<h5>').text(name).appendTo(settingTainer);
 
@@ -60,7 +64,6 @@ PEE.setting = (function ($, window, undefined) {
                     var emitter = $(ui.handle).closest('.toolbar').data().emitter,
                         key = $(ui.handle).closest('.setting-tainer').data().key;
                     if (master) {
-
                         for (var i = 0; i < emitter.length; i++) {
                             emitter[i][key[0]] = ui.value;
                             emitter[i].opts[key[0]] = emitter[i][key[0]];
@@ -79,7 +82,6 @@ PEE.setting = (function ($, window, undefined) {
         }
 
         sliderTainer.closest('.setting-tainer').prepend(minSpan).prepend(maxSpan);
-
 
         // change slider limits on click
         sliderTainer.siblings('span').click(function limitClick (event) {
@@ -125,7 +127,6 @@ PEE.setting = (function ($, window, undefined) {
                     sl.find('.ui-slider-handle:last-child').attr('title', vals[1]);
                     if (master) {
                         for (var i = 0; i < emitter.length; i++) {
-
                             emitter[i][key[0]] = vals[0];
                             emitter[i][key[1]] = vals[1];
                         }
@@ -163,9 +164,11 @@ PEE.setting = (function ($, window, undefined) {
             $input[0].focus();
             return false;
         });
-
-        if (name.match(/direction x|direction y|direction z/)) {
-            PEE.settingGraph(settingTainer, min, max, key, val, name, master)
+        
+        for (var g = 0; g < ParticleEffect.GRAPHABLES.length; g++) { 
+            if (name === ParticleEffect.GRAPHABLES[g]) {
+                PEE.settingGraph(settingTainer, min, max, key, val, name, master);
+            }
         }
     }
 

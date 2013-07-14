@@ -5,7 +5,6 @@ PEE.toolbar = (function ($, window, undefined) {
 
     // toolbar builder
     return function toolbar (emitter, opts, master) {
-        ;
 
         var tb = $('<div>');
 
@@ -23,9 +22,6 @@ PEE.toolbar = (function ($, window, undefined) {
             top: $('header').height()
         });
 
-        if (master) {
-            tb.css('left', '0px');
-        }
         // toolbar z-indexes are a first-in, last-out stack;
         tb.mousedown(function (event) {
             var self = this;
@@ -47,43 +43,52 @@ PEE.toolbar = (function ($, window, undefined) {
             return false;
         });
 
-        $('<div class="toolbar-header">' + ((master) ? "master" : emitter.name) +
-            '<a href="" class="close"><img src="images/gui-close-grey.png"></a>' +
-            '<a href="" class="up"><img src="images/gui-up-grey.png">' +
-            '<a href="" style="display: none" class="down"><img src="images/gui-down-grey.png"></a>' +
-            '</div>').appendTo(tb);
+        var header = $('<div class="toolbar-header">')
+            .text((master) ? "master" : emitter.name)
+            .appendTo(tb);
 
-        $('.up').click(function (event) {
+        $('<a href="" class="close"><img src="images/gui-close-grey.png"></a>')
+            .appendTo(header)
+            .click(function (event) {
+            var tb = $(this).closest('.toolbar');
+            tb.css('display', 'none');
+
+            $('.tb-select').each(function (index, element) {
+                if ($(element).closest('options-menu-p').text() === tb.find('.toolbar-header').text()) {
+                    $(element).val('hide');
+                }
+            });
+
+            return false;
+        });
+
+        $('<a href="" class="up"><img src="images/gui-up-grey.png">')
+            .appendTo(header)
+            .click(function (event) {
             var $this = $(this),
                 tb = $this.closest('.toolbar');
             tb.mCustomScrollbar('disable');
             tb.resizable('disable');
-            tb.find('.setting-tainer, .up').css('display', 'none');
+            tb.find('.setting-tainer').css('visibility', 'hidden');
             tb.attr('data-height', tb.height());
             tb.css('height', '0px');
-            $this.siblings('.down').css('display', 'block');
+            $this.css('display', 'none')
+                .siblings('.down').css('display', 'block');
             return false;
         });
 
-        $('.down').click(function (event) {
-            try {
-                var $this = $(this),
-                    tb = $this.closest('.toolbar');
-                console.log(tb.attr('data-height'));
-                tb.height(tb.attr('data-height'));
-                tb.removeAttr('data-height');
-                tb.find('.setting-tainer, .up').css('display', 'block');
-                $this.css('display', 'none');
-                tb.resizable('enable');
-                tb.mCustomScrollbar('update');
-            } catch (e) {
-                console.log(e.message);
-            }
-            return false;
-        });
-
-        $('.close').click(function (event) {
-            $(this).closest(".toolbar").css('display', 'none');
+        $('<a href="" style="display: none" class="down"><img src="images/gui-down-grey.png"></a>')
+            .appendTo(header)
+            .click(function (event) {
+            var $this = $(this),
+                tb = $this.closest('.toolbar');
+            tb.height(tb.attr('data-height'));
+            tb.removeAttr('data-height');
+            tb.find('.setting-tainer').css('visibility', 'visible');
+            $this.css('display', 'none')
+                .siblings('.up').css('display', 'block');
+            tb.resizable('enable');
+            tb.mCustomScrollbar('update');
             return false;
         });
 
@@ -143,6 +148,10 @@ PEE.toolbar = (function ($, window, undefined) {
 
         tb.find('.toolbar-header').width(tb.width() - 6);
         tb.find('.mCSB_draggerContainer').css('top', '35px');
+
+        if (!master) {
+            tb.css('visibility', 'hidden');
+        }
     }
 
 }(jQuery, window));

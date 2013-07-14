@@ -4,19 +4,27 @@ PEE.settingGraph = (function ($, window, undefined) {
 
     return function (settingTainer, min, max, key, val, name, master) {
         var emitter = settingTainer.closest('.toolbar').data('emitter'),
-            setting = settingTainer.data('key');
-
-        var slider = settingTainer.find('.ui-slider'),
+            setting = settingTainer.data('key'),
+            /**/
             $svg = $(svg('svg')),
             $rect = $(svg('rect')),
+            $textElem = $(svg('text')),
             ht = settingTainer.height() * 3,
-            wt = settingTainer.width() - 16; // $('.mCSB_scrollTools').width();
+            wt = settingTainer.width() - 16;
 
-        $svg.data('slider', slider)
-            .height(ht).width(wt);
+        $svg.addClass('graph-svg')
+            .appendTo(settingTainer)
+            .data('name', name)
+            .data('slider', settingTainer.find('.ui-slider'))
+            .data('aspect', ht / wt)
+            .attr({
+            height: ht,
+            width: wt
+        });
+
         $rect.attr({
             height: ht,
-            width: $svg.width(),
+            width: wt,
             fill: '#000',
             stroke: '#FFF',
             'stroke-width': 2
@@ -25,11 +33,83 @@ PEE.settingGraph = (function ($, window, undefined) {
             return false;
         })
             .appendTo($svg);
+
+        $textElem.appendTo($svg)
+            .text('life')
+            .appendTo($svg);
+        $textElem.attr({
+            fill: '#A0A0A0',
+            x: ($svg.width() - $textElem[0].getBBox().width) / 2,
+            y: $svg.height() - (0.3 * $textElem.height())
+        });
+
+        $($svg.closest('.toolbar')[0]).on('resize', function (event, ui) {
+            var $this = $(this),
+                $svg = $($this.find('svg')),
+                $rect = $($svg.find('rect')),
+                ow = $svg.attr('width'),
+                nw = $this.width() - $this.find('.mCSB_scrollTools').width(),
+                oh = $svg.attr('height'),
+                nh = nw * $svg.data('aspect');
+            $svg.attr({
+                width: nw,
+                height: nw * $svg.data('aspect')
+            });
+
+            $svg.find('rect').attr({
+                width: nw,
+                height: nw * $svg.data('aspect') - 2,
+                fill: '#000'
+            });
+            $svg.find('.gridline-horiz').attr({
+                x2: nw
+            });
+            $svg.find('text').attr({
+                x: ($svg.width() - $svg.find('text')[0].getBBox().width) / 2,
+                y: $svg.height() - (0.3 * $($svg.find('text')[0]).height())
+            });
+            $svg.each(function (index, element) {
+                for (var i = 0, ht = 0; ht < $rect.attr('height'); ht += $rect.attr('height') / 5) {
+                    $line = $($(element).find('.gridline-horiz')[i++]),
+                        wt = $rect.attr('width');
+                    $line.attr({
+                        x1: 0,
+                        y1: ht,
+                        x2: wt,
+                        y2: ht,
+                        stroke: '#FFF',
+                        'stoke-width': 1
+                    });
+                }
+                for (var i = 0, wt = 0; wt < $rect.attr('width'); wt += $rect.attr('width') / 5) {
+                    $line = $($(element).find('.gridline-vert')[i++]),
+                        ht = $rect.attr('height');
+                    $line.attr({
+                        x1: wt,
+                        y1: 0,
+                        x2: wt,
+                        y2: ht,
+                        stroke: '#FFF',
+                        'stoke-width': 1
+                    });
+                }
+                $(element).find('circle').each(function (index, element) {
+                    $(element).attr({
+                        cx: $(element).attr('cx') * (nw / ow),
+                        cy: $(element).attr('cy') * (nh / oh)
+                    });
+                });
+                connectTheDots($(element), 'max');
+                connectTheDots($(element), 'min');
+            });
+        });
+
         for (var ht = 0; ht < $rect.attr('height'); ht += $rect.attr('height') / 5) {
 
             var $line = $(svg('line')),
                 wt = $rect.attr('width');
             $line.attr({
+                class: 'gridline-horiz',
                 x1: 0,
                 y1: ht,
                 x2: wt,
@@ -48,6 +128,7 @@ PEE.settingGraph = (function ($, window, undefined) {
             $line = $(svg('line')),
                 ht = $rect.attr('height');
             $line.attr({
+                class: 'gridline-vert',
                 x1: wt,
                 y1: 0,
                 x2: wt,
@@ -58,8 +139,7 @@ PEE.settingGraph = (function ($, window, undefined) {
                 .appendTo($svg);
         }
 
-        slider.siblings('span').css('visibility', 'hidden');
-        slider.replaceWith($svg);
+        $svg.css('display', 'none');
 
         var emit = (typeof(emitter) === 'array') ? emitter[0] : emitter
         plotPoint($svg, 2, ht - 4, 'minpoint');
@@ -79,7 +159,10 @@ PEE.settingGraph = (function ($, window, undefined) {
                 if (event.which === 3) {
                     if ($(event.target).data('lineR') && $(event.target).data('lineL')) {
                         var type = ($(event.target)[0].classList.contains('maxpoint')) ? 'max' : 'min';
-                        $(event.target).remove();
+
+                        event.target.parentNode.removeChild(event.target);
+                        delete event.target;
+                        console.log(event.target);
                         connectTheDots($svg, type);
                     }
                 } else {
@@ -97,7 +180,7 @@ PEE.settingGraph = (function ($, window, undefined) {
         });
 
         $svg.on('mousemove', function (event) {
-            event.stopImmediatePropagation();
+            //event.stopImmediatePropagation();
             movePoint(event);
 
 
@@ -107,7 +190,7 @@ PEE.settingGraph = (function ($, window, undefined) {
             for (var i = 0; i < emitter.length; i++) {
                 var min = emitter[i][setting[0] + 'Test'] = [],
                     max = emitter[i][setting[1] + 'Test'] = [];
-                    
+
                 $svg.find('.minpoint').each(function (index, element) {
                     min[index * 4] = element.getAttribute('cx') / $svg.width();
                     min[index * 4 + 1] = ($svg.height() - element.getAttribute('cy')) / $svg.height() * 2 - 1;
@@ -120,7 +203,7 @@ PEE.settingGraph = (function ($, window, undefined) {
                     // slope
                     min[k] = (min[k - 1] - min[k - 5]) / (min[k - 2] - min[k - 6]);
                     //min[k] = 'm';
-                    
+
                     // y intercept
                     min[k + 1] = -(min[k] * min[k - 2] - min[k - 1]);
                     //min[k + 1] = 'b';
@@ -138,7 +221,7 @@ PEE.settingGraph = (function ($, window, undefined) {
                     // slope
                     max[k] = (max[k - 1] - max[k - 5]) / (max[k - 2] - max[k - 6]);
                     //max[k] = 'm';
-                    
+
                     // y intercept
                     max[k + 1] = -(max[k] * max[k - 2] - max[k - 1]);
                     //max[k + 1] = 'b';
@@ -146,7 +229,7 @@ PEE.settingGraph = (function ($, window, undefined) {
 
             }
 
-            return false;
+            //return false;
         }).on('mouseup', function (event) {
             $movingPoint = null;
             return false;
@@ -201,7 +284,9 @@ PEE.settingGraph = (function ($, window, undefined) {
                 'stroke-width': 1,
                 fill: '#FFF',
                 r: 4
-            });
+            })
+                .data('ocx', cx)
+                .data('ocy', cy);
 
             $newPoint.appendTo($svg);
             return $newPoint;

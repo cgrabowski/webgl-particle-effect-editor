@@ -15,12 +15,12 @@ header {
     border-bottom: 1px solid #000;
 }
 
-button {
+button, select{
     color: #E0E0E0;
     border: 3px solid #000;
 }
 
-header, .toolbar, #options-menu, button, input {    
+header, .toolbar, #options-menu, button, input, select {    
     background:#404040;
 }
 
@@ -34,41 +34,73 @@ header, .toolbar, #options-menu, button, input {
     visibility: hidden;
     position: absolute;
     right: 0px;
-    top: 27px;
+    top: 29px;
     z-index: 1000000;
     width: 25%;
-    padding-top: 0px;
+    min-width: 370px;
+    padding: 0px;
+    border-top: 10px solid black;
 }
 
-#options-menu p {
-    border-bottom: 1px solid black;
+#emitters-div {
+    border-top: 10px solid black;
 }
 
-.menu-div {
-    border-bottom: 10px solid #000;
+.menu-div-left, .menu-div-right {
+    width: 48%;
+    min-width: 160px;    
 }
 
-.menu-div:last-of-type {
-    border-bottom: none;
+.menu-div-full {
+    clear: both;
+    border-top: 10px solid #000;
 }
 
-.menu-div * {
-    padding: 3px;
-    padding: 0.25rem;
+.menu-div-left {
+    float: left;   
+}
+
+.menu-div-right {
+    float: right;    
+    border-left: 10px solid #000;
 }
 
 .menu-heading {
+    padding: 3px;
+    padding: 0.25rem;
     padding-top: 0px;
     border-bottom: 1px solid #000;
 }
 
-.options-menu-text-p {
+.options-menu-p {
+    border-bottom: 1px solid black;
+    padding: 3px;
+    padding: 0.25rem;
     height: 40px;
     clear: right;
 }
 
-.text-p-img {
+.options-menu-p:last-of-type {
+    border-bottom: none;
+}
+
+.menu-select {
     float: right;
+    cursor: pointer;
+}
+
+.transparency-img {
+    position: relative;
+    float: right;    
+    cursor: pointer;
+    border: 1px solid black;
+}
+
+.text-p-img {
+    padding-right: 4px;
+    padding-top: 1px;
+    position: absolute;
+    right: 0px;    
 }
 
 .toolbar {
@@ -76,9 +108,9 @@ header, .toolbar, #options-menu, button, input {
     height: 312px;
     padding-bottom: 12px;
     padding-bottom: 1rem;
-    padding-left: 6px;
-    padding-left: 0.5rem;
     border: 1px solid black;
+    left: 0px;
+    z-index: 100;
 }
 
 .toolbar-header {
@@ -92,7 +124,7 @@ header, .toolbar, #options-menu, button, input {
     padding-top: 0.333rem;
     text-align: left;
     position: fixed;
-    width: 180px;
+    width: 100%;
     border-bottom: 1px solid black;
     background: #404040;
     z-index: 3;
@@ -131,6 +163,7 @@ header, .toolbar, #options-menu, button, input {
 
 .min-span, .max-span{
     position: absolute;
+    cursor: pointer;
 }
 
 .min-span {
