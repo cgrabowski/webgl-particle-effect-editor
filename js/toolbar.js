@@ -12,6 +12,7 @@ PEE.toolbar = (function ($, window, undefined) {
             tb.data('master', true);
         }
         tb.data('emitter', emitter);
+        tb.data('name', (tb.data('master')) ? 'master' : emitter.emitterName);
 
         tb.draggable({snap: '#header, #container, .toolbar'})
             .addClass('toolbar')
@@ -44,7 +45,7 @@ PEE.toolbar = (function ($, window, undefined) {
         });
 
         var header = $('<div class="toolbar-header">')
-            .text((master) ? "master" : emitter.name)
+            .text((master) ? "master" : emitter.emitterName)
             .appendTo(tb);
 
         $('<a href="" class="close"><img src="images/gui-close-grey.png"></a>')
@@ -93,6 +94,9 @@ PEE.toolbar = (function ($, window, undefined) {
         });
 
         for (var opt in opts) {
+            if (opt === 'graphableConfig') {
+                continue;
+            }
             var min = null,
                 max = null,
                 minKey = null,
@@ -144,7 +148,7 @@ PEE.toolbar = (function ($, window, undefined) {
             start: function (event, ui) {
                 window.dispatchEvent(new CustomEvent('pause'));
             },
-            stop: function(event, ui) {
+            stop: function (event, ui) {
                 window.dispatchEvent(new CustomEvent('resume'));
             },
             resize: function (event, ui) {

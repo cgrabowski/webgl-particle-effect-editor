@@ -18,15 +18,15 @@
     "minDelay": [0, 10000],
     "maxDelay": [0, 10000]
   },
-  "x offset": {
+  "offset x": {
     "minOffsetX": [-100, 100],
     "maxOffsetX": [-100, 100]
   },
-  "y offset": {
+  "offset y": {
     "minOffsetY": [-100, 100],
     "maxOffsetY": [-100, 100]
   },
-  "z offset": {
+  "offset z": {
     "minOffsetZ": [-200, -200],
     "maxOffsetZ": [0, 0]
   },

@@ -65,7 +65,7 @@ PEE.gui = (function ($, window, undefined) {
                 var opts = {};
 
                 for (var opt in guiOpts) {
-                    if (opt.match(/name|duration|continuous|wind|rotation vec/)) {
+                    if (opt.match(/emitterName|duration|continuous|wind|rotation vec/)) {
                         continue;
                     }
 
