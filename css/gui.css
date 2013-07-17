@@ -57,7 +57,7 @@ header, .toolbar, #options-menu, button, input, select {
 }
 
 .menu-div-left {
-    float: left;   
+    float: left;       
 }
 
 .menu-div-right {
@@ -89,6 +89,12 @@ header, .toolbar, #options-menu, button, input, select {
     cursor: pointer;
 }
 
+.channel-select {
+    float: right;
+    visibility: hidden;
+    clear: both;
+}
+
 .transparency-img {
     position: relative;
     float: right;    
@@ -107,7 +113,11 @@ header, .toolbar, #options-menu, button, input, select {
     width: 200px;
     height: 312px;
     padding-bottom: 12px;
-    padding-bottom: 1rem;
+    padding-bottom: 1rem;  
+    padding-left: 3px;
+    padding-left:0.25rem;
+    padding-right: 3px;
+    padding-right: 0.25rem;
     border: 1px solid black;
     left: 0px;
     z-index: 100;

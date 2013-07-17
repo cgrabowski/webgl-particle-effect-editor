@@ -3,11 +3,12 @@ var PEE = PEE || {};
 PEE.optionsMenu = (function ($, window, undefined) {
 
     // options menu
-    return function OptionsMenu (effect, emitters, callback) {
+    return function OptionsMenu (effect, emitters, guiOpts) {
+
         var optionsMenu = $('<div>').attr('id', 'options-menu');
         optionsMenu.prependTo('body');
 
-        // graph or slider
+        // Controls
         var graphables = ParticleEffect.GRAPHABLES,
             graphMenu = $('<div>'),
             emitterSel = $('<select>');
@@ -16,7 +17,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
             .attr('id', 'graph-menu')
             .appendTo(optionsMenu)
             .append(emitterSel)
-            .append('<h4 class="menu-heading">Graph or Slider</h4>');
+            .append('<h4 class="menu-heading">Controls</h4>');
 
         emitterSel.attr('id', 'graph-emitter-select')
             .addClass('menu-select')
@@ -26,11 +27,15 @@ PEE.optionsMenu = (function ($, window, undefined) {
             emitterSel.append('<option value="' + emitters[i].emitterName + '">' + emitters[i].emitterName + '</option>');
         }
 
+        graphMenu.find('h4').height($('#graph-emitter-select').height() * 2);
+
         emitterSel.click(function (event) {
             var emitter;
             if (emitterSel.val() === 'master') {
+                graphMenu.find('.channel-select').css('visibility', 'hidden');
                 emitter = effect;
             } else {
+                graphMenu.find('.channel-select').css('visibility', 'visible');
                 for (var i = 0; i < effect.emitters.length; i++) {
                     if (effect.emitters[i].emitterName === emitterSel.val()) {
                         emitter = effect.emitters[i];
@@ -39,18 +44,23 @@ PEE.optionsMenu = (function ($, window, undefined) {
                 }
             }
             var eg = emitter.graphablesConfig,
-                settings = $(graphMenu.find('p select')),
-                i = -1;
+                settings = $(graphMenu.find('p select.graph-select')),
+                i = 0;
+
+            // skip hidden selects (for settings that are not graphable)
+            while ($(settings[i]).css('visibility') === 'hidden') {
+                i++;
+            }
 
             settings.find('.slider-opt').each(function (index, element) {
                 element.selected = true;
             });
-
             while (eg) {
-                if (++i === settings.length) {
+                if (i++ === settings.length) {
                     console.error('infinite loop');
                     break;
                 } else if (eg % 2) {
+
                     $(settings[i]).children('.graph-opt')[0].selected = true;
                 }
                 eg >>>= 1;
@@ -58,19 +68,21 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
         });
 
-        for (var g = 0; g < graphables.length; g++) {
-            var sdp = $('<p>'),
-                sdsel = $('<select>');
+        for (var opt in guiOpts) {
+            var grp = $('<p>'),
+                grsel = $('<select>'),
+                useMasterSel = $('<select>');
 
-            sdp.addClass('options-menu-p')
-                .text(graphables[g])
+            grp.addClass('options-menu-p')
+                .text(opt)
                 .appendTo(graphMenu);
 
-            sdsel.addClass('menu-select')
-                .appendTo(sdp)
+            grsel.addClass('menu-select graph-select')
+                .css('clear', 'both')
+                .appendTo(grp)
                 .append('<option class="slider-opt" value="slider">Slider</option>')
                 .append('<option class="graph-opt" value="graph">Graph</option>')
-                .data('name', graphables[g])
+                .data('name', opt)
 
                 .click(function (event) {
                 var $this = $(this),
@@ -86,57 +98,57 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
                 $tb.find('svg').each(function (index, element) {
                     var $svg = $(element),
-                        flag = ($this.data('name').toUpperCase() + '_BIT').replace(' ', '_');
+                        flag = ($this.data('name').toUpperCase() + '_BIT');
 
                     if ($svg.data('name') === $this.data('name')) {
                         if ($this.val() === 'graph') {
                             emitter.enableGraphed(ParticleEffect.GRAPHABLE_FLAGS[flag]);
-                            console.log(emitter.graphablesConfig);
                             $svg.data('slider').css('display', 'none').siblings('span').css('display', 'none');
                             $svg.css('display', 'block');
                         } else if ($this.val() === 'slider') {
                             emitter.disableGraphed(ParticleEffect.GRAPHABLE_FLAGS[flag]);
-                            console.log(emitter.graphablesConfig);
                             $svg.data('slider').css('display', 'block')
                                 .siblings('span').css('display', 'inline');
                             $svg.css('display', 'none');
                         }
                     }
                 });
+            });
 
+            if (opt.match(/numParticles|life|delay/)) {
+                grsel.css('visibility', 'hidden');
+            }
 
+            useMasterSel.addClass('menu-select channel-select')
+                .appendTo(grp)
+                .append('<option class="use-master-opt" value="useMaster">Use Master</option>')
+                .append('<option class="use-self-opt" value="useSelf">Use Self</option>')
 
+                .data('name', opt)
 
-                /*
-                 ParticleEffect.GRAPHABLES = ['offset x', 'offset y', 'offset z', 'speed', 'direction x', 'direction y', 'direction z', 'rotation'];
-                 
-                 ParticleEffect.BASE_GRAPH_ARRAY = [0, -1, null, null, 1, 1, 2, -1];
-                 
-                 
-                 ParticleEffect.FLAGS = {
-                 OFFSET_X_BIT: 1,
-                 OFFSET_Y_BIT: 2,
-                 OFFSET_Z_BIT: 4,
-                 SPEED_BIT: 8,
-                 DIRECTION_X_BIT: 16,
-                 DIRECTION_Y_BIT: 32,
-                 DIRECTION_Z_BIT: 64,
-                 ROTATION_BIT: 128
-                 };
-                 */
+                .click(function (event) {
+                var $this = $(this),
+                    $tb,
+                    emitter,
+                    flag = ($this.data('name').toUpperCase() + '_BIT').replace(' ', '_');
 
-                //console.log($this);
-                // var flag;
-                // for (var gr in ParticleEffect.GRAPHABLES) {
-
-                // }
-                // $tb.data('emitter').effect.enableGraphed();
-
-
-
+                $('.toolbar').each(function (index, element) {
+                    if ($(element).data('name') === $('#graph-emitter-select').val()) {
+                        $tb = $(element);
+                        emitter = ($tb.data('master')) ? effect : $tb.data('emitter');
+                    }
+                });
+                if ($this.val() === 'useSelf') {
+                    emitter.useOwnChannel(ParticleEffect.CHANNEL_FLAGS[flag]);
+                } else if ($this.val() === 'useMaster') {
+                    emitter.useMasterChannel(ParticleEffect.CHANNEL_FLAGS[flag]);
+                }
 
             });
+
+            grp.height(grsel.height() + useMasterSel.height() * 2.2);
         }
+
 
         // textures
         var textDiv = $('<div>').addClass('menu-div-right')
@@ -200,7 +212,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
             // is saved as jquery data;
             img.data('input', inp);
             img.attr({
-                src: emitters[i].textSource,
+                src: emitters[i].opts.textSource,
                 height: 32,
                 width: 32
             })
@@ -212,7 +224,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
             });
         }
 
-        // emitters
+        // toolbars
         var emittersMenu = $('<div>').addClass('menu-div-right')
             .attr('id', 'emitters-div')
             .appendTo(optionsMenu),
@@ -248,8 +260,10 @@ PEE.optionsMenu = (function ($, window, undefined) {
                     $('.toolbar').each(function (index, element) {
                         if ($(element).data('master') && $this.data('toolbar-name') === 'master') {
                             $(element).css('visibility', 'visible');
+                            $(element).trigger('mousedown');
                         } else if ($(element).data('emitter').emitterName === $this.data('toolbar-name')) {
                             $(element).css('visibility', 'visible');
+                            $(element).trigger('mousedown');
                         }
                     });
                 } else if ($this.val() === 'hide') {
@@ -262,6 +276,14 @@ PEE.optionsMenu = (function ($, window, undefined) {
                     });
                 }
             });
+        }
+
+        var gmh = $('#graph-menu').height(),
+            tmh = $('#textures-div').height(),
+            emh = $('#emitters-div').height();
+
+        if (tmh + emh < gmh) {
+            $('#emitters-div').height(gmh - tmh)
         }
 
         // file actions
@@ -301,7 +323,6 @@ PEE.optionsMenu = (function ($, window, undefined) {
             reader.onload = function (event) {
                 $('#load-btn').text(file.name);
                 var effectData = JSON.parse(event.currentTarget.result);
-                console.log(emitters);
                 emitters.length = effectData.length;
                 for (var i = 0; i < effectData.length; i++) {
                     for (var opt in effectData[i]) {
@@ -312,6 +333,23 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
             reader.readAsText(file);
         });
+
+        $(window).on('load resize', function (event) {
+            if (!$('#options-menu').data('max-height-set')) {
+                $('#options-menu').css('max-height', $('#options-menu').height())
+                    .data('max-height-set', true);
+            }
+            $('#options-menu').height($(window).height() - 50);
+            $('#options-menu').mCustomScrollbar('update');
+        });
+
+        $('#options-menu').mCustomScrollbar({
+            advanced: {
+                updateOnContentResize: true
+            }
+        });
     }
-}(jQuery, window)
-    );
+
+
+
+}(jQuery, window));

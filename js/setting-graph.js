@@ -2,15 +2,16 @@ PEE = PEE || {};
 
 PEE.settingGraph = (function ($, window, undefined) {
 
-    return function (settingTainer, min, max, key, val, name, master) {
+    return function (settingTainer, name, master) {
+
         var emitter = settingTainer.closest('.toolbar').data('emitter'),
-            setting = settingTainer.data('key'),
-            /**/
+            effect = (emitter.length) ? emitter[0].effect : emitter.effect,
             $svg = $(svg('svg')),
             $rect = $(svg('rect')),
             $textElem = $(svg('text')),
             ht = settingTainer.height() * 3,
             wt = settingTainer.width() - 16;
+
 
         $svg.addClass('graph-svg')
             .appendTo(settingTainer)
@@ -141,7 +142,6 @@ PEE.settingGraph = (function ($, window, undefined) {
 
         $svg.css('display', 'none');
 
-        var emit = (typeof(emitter) === 'array') ? emitter[0] : emitter
         plotPoint($svg, 2, ht - 4, 'minpoint');
         plotPoint($svg, wt - 2, 0, 'minpoint');
         plotPoint($svg, 2, ht - 2, 'maxpoint');
@@ -156,15 +156,12 @@ PEE.settingGraph = (function ($, window, undefined) {
 
         $svg.on('mousedown', function (event) {
             if (event.target.tagName === 'circle') {
-                if (event.which === 3) {
-                    if ($(event.target).data('lineR') && $(event.target).data('lineL')) {
-                        var type = ($(event.target)[0].classList.contains('maxpoint')) ? 'max' : 'min';
+                if (event.which === 3 && $(event.target).data('lineR') && $(event.target).data('lineL')) {
+                    var type = ($(event.target)[0].classList.contains('maxpoint')) ? 'max' : 'min';
 
-                        event.target.parentNode.removeChild(event.target);
-                        delete event.target;
-                        console.log(event.target);
-                        connectTheDots($svg, type);
-                    }
+                    event.target.parentNode.removeChild(event.target);
+                    delete event.target;
+                    connectTheDots($svg, type);
                 } else {
                     $movingPoint = $(event.target);
                 }
@@ -184,49 +181,50 @@ PEE.settingGraph = (function ($, window, undefined) {
             movePoint(event);
 
 
-            //[x1, y1, und, und, x2, y2, V m, b, x2, y2, V m, b, [...]]
+            //[x1, y1, und, und, x2, y2, V m, b, x3, y3, V m, b, [...]]
 
+            var min, max;
 
-            for (var i = 0; i < emitter.length; i++) {
-                var min = emitter[i][setting[0] + 'Test'] = [],
-                    max = emitter[i][setting[1] + 'Test'] = [];
+            if (master) {
+                min = effect.opts['min' + name.capitalize() + 'Graph'] = [];
+                max = effect.opts['max' + name.capitalize() + 'Graph'] = [];
+            } else {
+                min = emitter.opts['min' + name.capitalize() + 'Graph'] = [];
+                max = emitter.opts['max' + name.capitalize() + 'Graph'] = [];
+            }
 
-                $svg.find('.minpoint').each(function (index, element) {
-                    min[index * 4] = element.getAttribute('cx') / $svg.width();
-                    min[index * 4 + 1] = ($svg.height() - element.getAttribute('cy')) / $svg.height() * 2 - 1;
-                });
+            $svg.find('.minpoint').each(function (index, element) {
+                min[index * 4] = element.getAttribute('cx') / $svg.width();
+                min[index * 4 + 1] = ($svg.height() - element.getAttribute('cy')) / $svg.height() * 2 - 1;
+            });
 
-                var len = min.length,
-                    stride = len / 2 - 2;
+            var len = min.length;
 
-                for (var k = len; k >= 6; k -= 4) {
-                    // slope
-                    min[k] = (min[k - 1] - min[k - 5]) / (min[k - 2] - min[k - 6]);
-                    //min[k] = 'm';
+            for (var k = len; k >= 6; k -= 4) {
+                // slope
+                min[k] = (min[k - 1] - min[k - 5]) / (min[k - 2] - min[k - 6]);
+                //min[k] = 'm';
 
-                    // y intercept
-                    min[k + 1] = -(min[k] * min[k - 2] - min[k - 1]);
-                    //min[k + 1] = 'b';
-                }
+                // y intercept
+                min[k + 1] = -(min[k] * min[k - 2] - min[k - 1]);
+                //min[k + 1] = 'b';
+            }
 
-                $svg.find('.maxpoint').each(function (index, element) {
-                    max[index * 4] = element.getAttribute('cx') / $svg.width();
-                    max[index * 4 + 1] = ($svg.height() - element.getAttribute('cy')) / $svg.height() * 2 - 1;
-                });
+            $svg.find('.maxpoint').each(function (index, element) {
+                max[index * 4] = element.getAttribute('cx') / $svg.width();
+                max[index * 4 + 1] = ($svg.height() - element.getAttribute('cy')) / $svg.height() * 2 - 1;
+            });
 
-                var len = max.length,
-                    stride = len / 2 - 2;
+            var len = max.length;
 
-                for (var k = len; k >= 6; k -= 4) {
-                    // slope
-                    max[k] = (max[k - 1] - max[k - 5]) / (max[k - 2] - max[k - 6]);
-                    //max[k] = 'm';
+            for (var k = len; k >= 6; k -= 4) {
+                // slope
+                max[k] = (max[k - 1] - max[k - 5]) / (max[k - 2] - max[k - 6]);
+                //max[k] = 'm';
 
-                    // y intercept
-                    max[k + 1] = -(max[k] * max[k - 2] - max[k - 1]);
-                    //max[k + 1] = 'b';
-                }
-
+                // y intercept
+                max[k + 1] = -(max[k] * max[k - 2] - max[k - 1]);
+                //max[k + 1] = 'b';
             }
 
             //return false;

@@ -52,10 +52,21 @@ PEE.toolbar = (function ($, window, undefined) {
             .appendTo(header)
             .click(function (event) {
             var tb = $(this).closest('.toolbar');
-            tb.css('display', 'none');
+            tb.css('visibility', 'hidden');
 
             $('.tb-select').each(function (index, element) {
-                if ($(element).closest('options-menu-p').text() === tb.find('.toolbar-header').text()) {
+                var paraNodes = $(element).closest('.options-menu-p')[0].childNodes,
+                    paraText;
+
+                for (var i = 0; i < paraNodes.length; i++) {
+                    if (paraNodes[i].nodeName === '#text') {
+                        paraText = paraNodes[i].nodeValue;
+                        break;
+                    }
+                }
+
+                if (paraText === tb.find('.toolbar-header').text()) {
+
                     $(element).val('hide');
                 }
             });
@@ -92,36 +103,8 @@ PEE.toolbar = (function ($, window, undefined) {
             tb.mCustomScrollbar('update');
             return false;
         });
-
         for (var opt in opts) {
-            if (opt === 'graphableConfig') {
-                continue;
-            }
-            var min = null,
-                max = null,
-                minKey = null,
-                maxKey = null,
-                val = null;
-            for (var key in opts[opt]) {
-                if (key.match(/min/i)) {
-                    min = opts[opt][key];
-                    minKey = key;
-                } else if (key.match(/max/i)) {
-                    max = opts[opt][key];
-                    maxKey = key;
-                } else {
-                    val = opts[opt][key];
-                    key = [key];
-                    break;
-                }
-
-                if (min && max) {
-                    key = [minKey, maxKey];
-                    break;
-                }
-            }
-
-            PEE.setting(tb, min, max, key, val, opt, master);
+            PEE.setting(tb, opt, opts[opt], master);
         }
 
         // pressing enter closes an open limit input 

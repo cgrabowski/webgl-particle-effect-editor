@@ -36,62 +36,72 @@ PEE.gui = (function ($, window, undefined) {
             // call the effect engine, passing canvas, opts and callback;
             engine($('#webgl-canvas')[0], null, function (eff, render) {
                 effect = eff;
-                emitters = effect.emitters;
+                emitters = eff.emitters;
                 engineCallback = render;
                 $(window).trigger('engine-loaded');
             });
-
-            // Get gui default settings
-            var guiOptsRequest = new XMLHttpRequest();
-
-            guiOptsRequest.onload = function () {
-                guiOpts = JSON.parse(this.responseText);
-                $(window).trigger('gui-opts-loaded');
-            };
-
-            guiOptsRequest.open('get', 'http://localhost/WebGLParticleEffectEditor/gui-default.json');
-            guiOptsRequest.send();
         });
 
-        $(window).on('gui-opts-loaded engine-loaded', function (event) {
+        $(window).on('engine-loaded', function (event) {
 
-            // Proceed only if both the engine and gui opts are loaded;
-            if (!effect || !guiOpts) {
-                return;
-            }
+            var guiOpts = {
+                numParticles: [1, 300],
+                /**/
+                life: [1, 10000],
+                /**/
+                delay: [0, 10000],
+                /**/
+                offsetX: [-10, 10],
+                /**/
+                offsetY: [-10, 10],
+                /**/
+                offsetZ: [-20, 0],
+                /**/
+                speed: [1, 1000],
+                /**/
+                directionX: [-1, 1],
+                /**/
+                directionY: [-1, 1],
+                /**/
+                directionZ: [-1, 1],
+                /**/
+                rotation: [-7200, 7200]
+            };
 
             // Build toolbars using default gui opts and emitter opts;
             for (var i = 0; i < emitters.length; i++) {
-                var opts = {};
+
+                var tbOpts = {},
+                    eo = emitters[i].opts;
 
                 for (var opt in guiOpts) {
-                    if (opt.match(/emitterName|duration|continuous|wind|rotation vec/)) {
-                        continue;
-                    }
-
-                    opts[opt] = {};
-                    for (var val in guiOpts[opt]) {
-                        // Slider limits come from gui opts
-                        // Initial slider value comes from emitters opts
-                        opts[opt][val] = new Array(3);
-                        opts[opt][val][0] = guiOpts[opt][val][0];
-                        opts[opt][val][1] = emitters[i].opts[val];
-                        opts[opt][val][2] = guiOpts[opt][val][1];
-                    }
+                    tbOpts[opt] = guiOpts[opt].slice();
                 }
 
+                tbOpts.numParticles.splice(1, 0, eo.numParticles);
+                tbOpts.life.splice(1, 0, eo.minLife, eo.maxLife);
+                tbOpts.delay.splice(1, 0, eo.minDelay, eo.maxDelay);
+                tbOpts.offsetX.splice(1, 0, eo.minOffsetX, eo.maxOffsetX);
+                tbOpts.offsetY.splice(1, 0, eo.minOffsetY, eo.maxOffsetY);
+                tbOpts.offsetZ.splice(1, 0, eo.minOffsetZ, eo.maxOffsetZ);
+                tbOpts.speed.splice(1, 0, eo.minSpeed, eo.maxSpeed);
+                tbOpts.directionX.splice(1, 0, eo.minDirectionX, eo.maxDirectionX);
+                tbOpts.directionY.splice(1, 0, eo.minDirectionY, eo.maxDirectionY);
+                tbOpts.directionZ.splice(1, 0, eo.minDirectionZ, eo.maxDirectionZ);
+                tbOpts.rotation.splice(1, 0, eo.minRotation, eo.maxRotation);
+
                 // create emitter toolbars
-                PEE.toolbar(emitters[i], opts);
+                PEE.toolbar(emitters[i], tbOpts);
             }
 
             // create the master toolbar (it affects all emitters)
-            PEE.toolbar(emitters, opts, true);
+            PEE.toolbar(emitters, tbOpts, true);
 
             // create the page header
             header();
 
             // create the options menu
-            PEE.optionsMenu(effect, emitters);
+            PEE.optionsMenu(effect, emitters, guiOpts);
 
             // gui is complete, so begin rendering
             engineCallback();
@@ -129,8 +139,12 @@ PEE.gui = (function ($, window, undefined) {
                 .click(function (event) {
                 if ($('#options-menu').css('visibility') === 'hidden') {
                     $('#options-menu').css('visibility', 'visible');
+                    if ($('#graph-emitter-select').val() !== 'master') {
+                        $('.channel-select').css('visibility', 'visible');
+                    }
                 } else {
                     $('#options-menu').css('visibility', 'hidden');
+                    $('.channel-select').css('visibility', 'hidden');
                     return false;
                 }
             });
