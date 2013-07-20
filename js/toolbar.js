@@ -4,7 +4,7 @@ PEE.toolbar = (function ($, window, undefined) {
     var toolbarStack = [];
 
     // toolbar builder
-    return function toolbar (emitter, opts, master) {
+    return function toolbar (emitter, tbOpts, master) {
 
         var tb = $('<div>');
 
@@ -13,6 +13,8 @@ PEE.toolbar = (function ($, window, undefined) {
         }
         tb.data('emitter', emitter);
         tb.data('name', (tb.data('master')) ? 'master' : emitter.emitterName);
+        tbOpts.emitterName = (tb.data('master') ? 'master' : emitter.emitterName);
+        tb.data('tbOpts', tbOpts);
 
         tb.draggable({snap: '#header, #container, .toolbar'})
             .addClass('toolbar')
@@ -103,8 +105,8 @@ PEE.toolbar = (function ($, window, undefined) {
             tb.mCustomScrollbar('update');
             return false;
         });
-        for (var opt in opts) {
-            PEE.setting(tb, opt, opts[opt], master);
+        for (var opt in tbOpts) {
+            PEE.setting(tb, opt, tbOpts[opt], master);
         }
 
         // pressing enter closes an open limit input 

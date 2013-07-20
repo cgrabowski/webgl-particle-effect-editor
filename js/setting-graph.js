@@ -140,12 +140,53 @@ PEE.settingGraph = (function ($, window, undefined) {
                 .appendTo($svg);
         }
 
-        $svg.css('display', 'none');
+        var setting = $svg.closest('.setting-tainer').data('name'),
+            flag = setting.toUpperCase() + '_BIT';
 
+        if ($svg.closest('.toolbar').data('master')) {
+            var gConfig = effect.opts.graphablesConfig,
+                minData = effect.opts['min' + setting.capitalize() + 'Graph']
+                || ParticleEffect.BASE_GRAPH_ARRAY,
+                maxData = effect.opts['max' + setting.capitalize() + 'Graph']
+                || ParticleEffect.BASE_GRAPH_ARRAY;
+
+            plotPoint($svg, minData[4] * $svg.width(), (minData[5] + 1) / 2 * $svg.height(), 'minpoint');
+
+        } else {
+            var gConfig = emitter.opts.graphablesConfig,
+                minData = emitter.opts['min' + setting.capitalize() + 'Graph']
+                || ParticleEffect.BASE_GRAPH_ARRAY,
+                maxData = emitter.opts['max' + setting.capitalize() + 'Graph']
+                || ParticleEffect.BASE_GRAPH_ARRAY;
+        }
+
+        // on init make graph or slider visible based on graphablesConfig
+        if (gConfig & ParticleEffect.GRAPHABLE_FLAGS[flag]) {
+            $svg.css('display', 'block');
+            $svg.data('slider').css('display', 'none');
+            $svg.data('slider').siblings('span').css('display', 'none');
+        } else {
+            $svg.css('display', 'none');
+            $svg.data('slider').css('display', 'block');
+            $svg.data('slider').siblings('span').css('display', 'block');
+        }
+
+        // plot left-most and right-most points for both the min and max lines
+        // this proved a little padding between the points and the
+        // edge of the graph
         plotPoint($svg, 2, ht - 4, 'minpoint');
         plotPoint($svg, wt - 2, 0, 'minpoint');
         plotPoint($svg, 2, ht - 2, 'maxpoint');
         plotPoint($svg, wt - 2, 2, 'maxpoint');
+
+        // plot points from saved graph data (except for left and right most points
+        for (var i = 4; i < minData.length - 5; i += 4) {
+            plotPoint($svg, minData[i] * $svg.width(), (-minData[i + 1] + 1) / 2 * $svg.height(), 'minpoint');
+        }
+
+        for (var i = 4; i < maxData.length - 5; i += 4) {
+            plotPoint($svg, maxData[i] * $svg.width(), (-maxData[i + 1] + 1) / 2 * $svg.height(), 'maxpoint');
+        }
 
         connectTheDots($svg, 'max');
         connectTheDots($svg, 'min');
@@ -267,7 +308,6 @@ PEE.settingGraph = (function ($, window, undefined) {
             }
             return false;
         }
-
 
         function plotPoint ($svg, cx, cy, type) {
             if (!type) {

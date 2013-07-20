@@ -13,9 +13,7 @@ PEE.setting = (function ($, window, undefined) {
         var settingTainer = $('<div>'),
             sliderTainer = $('<div>'),
             minSpan = $('<span class="min-span">'),
-            maxSpan = $('<span class="max-span">'),
-            minGraph = $('<span class="min-graph>'),
-            maxGraph = $('<span class="max-graph>');
+            maxSpan = $('<span class="max-span">');
 
         settingTainer.addClass('setting-tainer')
             .data('name', name)
@@ -113,9 +111,7 @@ PEE.setting = (function ($, window, undefined) {
 
                 var sl = $input.siblings('.ui-slider'),
                     newLimit = parseFloat($input.val().replace(/^[^-][^0-9\.]/g, "")),
-                    guiOpt = sl.closest('.setting-tainer').data('guiOpt');
-
-                console.log(guiOpt);
+                    guiOpt = sl.closest('.setting-tainer').data('guiOpt');                
 
                 // check if val is NaN
                 if (!(newLimit < Infinity)) {
