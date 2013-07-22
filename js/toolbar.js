@@ -106,6 +106,9 @@ PEE.toolbar = (function ($, window, undefined) {
             return false;
         });
         for (var opt in tbOpts) {
+            if (opt.match(/emitterName/)) {
+                continue;
+            }
             PEE.setting(tb, opt, tbOpts[opt], master);
         }
 

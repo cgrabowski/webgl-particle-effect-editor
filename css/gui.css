@@ -15,12 +15,13 @@ header {
     border-bottom: 1px solid #000;
 }
 
-button, select{
+button, select, #add-emitter-div, #delete-emitter-div, #add-emitter-input {
     color: #E0E0E0;
     border: 3px solid #000;
+    cursor: pointer;
 }
 
-header, .toolbar, #options-menu, button, input, select {    
+header, .toolbar, #options-menu, button, input, select, #add-emitter-div, #delete-emitter-div {    
     background:#404040;
 }
 
@@ -36,14 +37,35 @@ header, .toolbar, #options-menu, button, input, select {
     right: 0px;
     top: 29px;
     z-index: 1000000;
-    width: 25%;
-    min-width: 370px;
+    width: 27%;
+    min-width: 405px;
     padding: 0px;
     border-top: 10px solid black;
 }
 
+#add-emitter-div, #delete-emitter-div {
+    text-align: center;
+    position: absolute;
+    width: 100px;
+    z-index: 1001;
+}
+
+#add-emitter-div {
+    right: 100px;
+}
+
+#delete-emitter-div {
+    right: 0px;
+}
+
 #emitters-div {
     border-top: 10px solid black;
+}
+
+.menu-div-left, .menu-div-right, .menu-div-full {
+    padding-top: 6px;
+    padding-top: 0.5rem;    
+    border-top: 1px solid #000;
 }
 
 .menu-div-left, .menu-div-right {
@@ -53,7 +75,7 @@ header, .toolbar, #options-menu, button, input, select {
 
 .menu-div-full {
     clear: both;
-    border-top: 10px solid #000;
+    border-bottom: 10px solid #000;
 }
 
 .menu-div-left {
@@ -66,16 +88,17 @@ header, .toolbar, #options-menu, button, input, select {
 }
 
 .menu-heading {
-    padding: 3px;
-    padding: 0.25rem;
-    padding-top: 0px;
+    padding: 6px;
+    padding: 0.5rem;
     border-bottom: 1px solid #000;
 }
 
 .options-menu-p {
-    border-bottom: 1px solid black;
-    padding: 3px;
-    padding: 0.25rem;
+    padding-left: 6px;
+    padding-left: 0.5rem;
+    padding-top: 3px;
+    padding-top: 0.25rem;
+    border-bottom: 1px solid #000;
     height: 40px;
     clear: right;
 }
@@ -169,6 +192,10 @@ header, .toolbar, #options-menu, button, input, select {
 
 #options-menu-anchor {
     padding: 3px;
+}
+
+.btn-right {
+    float: right;
 }
 
 .min-span, .max-span{

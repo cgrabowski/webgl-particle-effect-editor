@@ -5,7 +5,8 @@ $(window).on('PEE-loaded', function (event) {
 });
 
 PEE.gui = (function ($, window, undefined) {
-    var effect,
+    var gl,
+        effect,
         emitters,
         guiOpts,
         engineCallback;
@@ -15,13 +16,11 @@ PEE.gui = (function ($, window, undefined) {
         $(document).ready(function () {
             // If an error occured during last unload, log it;
             if (localStorage.getItem('unloaderror')) {
-                console.log(localStorage.getItem('unloaderror'));
+                console.log('Unload error: ' + localStorage.getItem('unloaderror'));
             }
 
-            var effectOpts = JSON.parse(localStorage.getItem('effectOpts') || null),
-                emittersOpts = JSON.parse(localStorage.getItem('emittersOpts') || null);
-
-            emittersOpts.unshift(null);
+            var effectOpts = JSON.parse(localStorage.getItem('effectOpts')),
+                emittersOpts = JSON.parse(localStorage.getItem('emittersOpts'));
 
             guiOpts = JSON.parse(localStorage.getItem('guiOpts') || null);
 
@@ -31,8 +30,10 @@ PEE.gui = (function ($, window, undefined) {
                 .attr('id', 'webgl-canvas')
                 .appendTo($('#container'));
 
+
             // call the effect engine, passing canvas, opts and callback;
-            engine($('#webgl-canvas')[0], effectOpts, emittersOpts, function (eff, render) {
+            engine($('#webgl-canvas')[0], effectOpts, emittersOpts, function (GL, eff, render) {
+                gl = GL
                 effect = eff;
                 effect.opts = effectOpts;
                 emitters = eff.emitters;
@@ -42,6 +43,9 @@ PEE.gui = (function ($, window, undefined) {
         });
 
         $(window).on('engine-loaded', function (event) {
+
+            // WebGL debugging
+            WebGLDebugUtils.makeDebugContext(gl);
 
             if (guiOpts) {
                 guiOpts.forEach(function (element, index, array) {
@@ -135,22 +139,21 @@ PEE.gui = (function ($, window, undefined) {
         // Save emitters opts to local storage on unload;
         // Save any errors when unloading the window so they can be read onload;
         $(window).unload(function (event) {
-
-            var emittersOpts = [],
-                guiOpts = [];
-
-            for (var i = 0; i < emitters.length; i++) {
-                emittersOpts.push(emitters[i].opts)
-                emittersOpts[i].emitterName = emitters[i].emitterName;
-            }
-
-            $('.toolbar').each(function (index, element) {
-                guiOpts.push($(element).data('tbOpts'));
-            });
-
-            localStorage.setItem('unloaderror', 'no unload error');
-
             try {
+                var emittersOpts = [],
+                    guiOpts = [];
+
+                for (var i = 0; i < effect.emitters.length; i++) {
+                    emittersOpts.push(effect.emitters[i].opts)
+                    emittersOpts[i].emitterName = effect.emitters[i].emitterName;
+                }
+
+                $('.toolbar').each(function (index, element) {
+                    guiOpts.push($(element).data('tbOpts'));
+                });
+
+                localStorage.setItem('unloaderror', 'no unload error');
+
                 localStorage.setItem('emittersOpts', JSON.stringify(emittersOpts));
                 localStorage.setItem('guiOpts', JSON.stringify(guiOpts));
                 localStorage.setItem('effectOpts', JSON.stringify(effect.opts));

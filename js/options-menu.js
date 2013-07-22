@@ -3,62 +3,195 @@ var PEE = PEE || {};
 PEE.optionsMenu = (function ($, window, undefined) {
 
     // options menu
-    return function OptionsMenu (effect, emitters, guiOpts) {
+    return function (effect, emitters, guiOpts) {
 
         var optionsMenu = $('<div>').attr('id', 'options-menu');
+
         optionsMenu.prependTo('body');
 
-        // Controls
-        var graphables = ParticleEffect.GRAPHABLES,
-            graphMenu = $('<div>'),
-            emitterSel = $('<select>');
+        // Actions
+        var actions = $('<div id="actions">').addClass('menu-div-full');
+        optionsMenu.prepend(actions);
+        actions
+            .append('<h4 class="menu-heading">Actions</h4>')
+            .append('<button id="save-btn">')
+            .append('<button id="load-btn">')
+            .append('<input id="load-input">')
+            .append('<button id="add-emitter">');
+        $('<button id="delete-emitter">').insertBefore($('#add-emitter'));
 
-        graphMenu.addClass('menu-div-left')
-            .attr('id', 'graph-menu')
-            .appendTo(optionsMenu)
-            .append(emitterSel)
-            .append('<h4 class="menu-heading">Controls</h4>');
 
-        emitterSel.attr('id', 'emitter-select')
-            .addClass('menu-select')
-            .append('<option value="master">master</option>');
+        $('#save-btn').text('Save Effect').click(function (event) {
+            try {
+                var save = []
+                    , json
+                    , blob;
 
-        for (var i = 0; i < emitters.length; i++) {
-            emitterSel.append('<option value="' + emitters[i].emitterName + '">' + emitters[i].emitterName + '</option>');
-        }
+                for (var i = 0; i < emitters.length; i++) {
+                    save.push(emitters[i].opts);
+                }
 
-        graphMenu.find('h4').height($('#emitter-select').height() * 2);
+                json = JSON.stringify(save, undefined, 2);
 
-        emitterSel.click(function (event) {
-            var emitter;
-            if (emitterSel.val() === 'master') {
-                graphMenu.find('.channel-select').css('visibility', 'hidden');
-                emitter = effect;
-            } else {
-                graphMenu.find('.channel-select').css('visibility', 'visible');
-                for (var i = 0; i < effect.emitters.length; i++) {
-                    if (effect.emitters[i].emitterName === emitterSel.val()) {
-                        emitter = effect.emitters[i];
-                        break;
+                blob = new Blob([json], {type: 'application/json'});
+                saveAs(blob, "effect.json");
+            } catch (e) {
+                console.error('error saving effect.\n%o\n%o', emitters, save);
+            }
+        });
+
+        $('#load-btn').text('Load Effect').click(function (event) {
+            $('#load-input').click();
+        });
+        $('#load-input').css('display', 'none').attr('type', 'file').on('change', function (event) {
+            var file = this.files[0],
+                reader = new FileReader();
+
+            reader.onload = function (event) {
+                $('#load-btn').text(file.name);
+                var effectData = JSON.parse(event.currentTarget.result);
+                emitters.length = effectData.length;
+                for (var i = 0; i < effectData.length; i++) {
+                    for (var opt in effectData[i]) {
+                        emitters[i][opt] = effectData[i][opt];
                     }
                 }
-            }
+            };
 
-            var gConfig = emitter.opts.graphablesConfig,
-                $settings = $(graphMenu.find('p select.graph-select:visible'));
+            reader.readAsText(file);
+        });
 
-            $settings.children('.slider-opt').each(function (index, element) {
-                element.selected = true;
+        $('#add-emitter').text('Add Emitter')
+            .addClass('btn-right')
+            .click(function (event) {
+            event.stopImmediatePropagation();
+
+            $(window).on('keyup', function addEmitterKeyListener (event) {
+                if (event.keyCode === 13) {
+                    createEmitter();
+                    $(window).off('keyup');
+                } else if (event.keyCode === 27) {
+                    $(window).off('keyup');
+                }
             });
 
-            $settings.children('.graph-opt').each(function (index, element) {
-                var flag = $(element).closest('p')[0].childNodes[0].nodeValue.toUpperCase() + '_BIT';
-                if (gConfig & ParticleEffect.GRAPHABLE_FLAGS[flag]) {
-                    element.selected = true;
-                }
+
+            $('<div>').attr('id', 'add-emitter-div')
+                .appendTo('#actions')
+                .append('<input type="text" id="add-emitter-input" />');
+
+            $('#add-emitter-input').focus();
+        });
+
+        function createEmitter () {
+
+            var image = new Image();
+
+            effect.textureSources.push('images/particle.png');
+            image.onload = function () {
+                effect.textureManager('add')(image);
+                effect.emitters.push(new ParticleEmitter(effect, {textSource: 'images/particle.png', emitterName: $('#add-emitter-input').val()}, effect.emitters.length));
+                effect.emitters[effect.emitters.length - 1].bindTexture = effect.textureManager('bind')(effect.emitters.length - 1);
+                $('#add-emitter-div').remove();
+                $('div').trigger('emitter-added');
+            };
+            image.src = 'images/particle.png';
+
+        }
+
+        $('#delete-emitter').text('Delete Emitter')
+            .addClass('btn-right')
+            .click(function (event) {
+
+            event.stopImmediatePropagation();
+
+            if ($('#delete-emitter-div').length > 0) {
+                $('#delete-emitter-div').remove();
+                return false;
+            }
+
+            var deleteList = $('<div>')
+                .attr('id', 'delete-emitter-div')
+                .appendTo('#actions');
+
+            effect.emitters.forEach(function (element, index, array) {
+                var ep = $('<p>').text(element.opts.emitterName)
+                    .click(function (event) {
+                    effect.emitters[index] = null
+                    effect.emitters.splice(index, 1);
+                    $('div').trigger('emitter-removed');
+                });
+
+                deleteList.append(ep);
+            });
+
+            $('*').one('click', function (event) {
+                $('#delete-emitter-div').remove();
             });
 
         });
+
+        // Controls
+        var graphables = ParticleEffect.GRAPHABLES,
+            controlsMenu = $('<div>');
+
+        controlsMenu.addClass('menu-div-left')
+            .attr('id', 'graph-menu')
+            .appendTo(optionsMenu)
+            .append('<h4 class="menu-heading">Controls</h4>');
+
+        createEmitterSelect();
+
+        controlsMenu.on('emitter-added emitter-removed', function (event) {
+            $('#emitter-select').remove();
+            createEmitterSelect();
+        });
+
+        function createEmitterSelect () {
+            var emitterSel = $('<select>');
+            controlsMenu.prepend(emitterSel);
+            emitterSel.attr('id', 'emitter-select')
+                .addClass('menu-select')
+                .append('<option value="master">master</option>');
+
+            for (var i = 0; i < emitters.length; i++) {
+                emitterSel.append('<option value="' + emitters[i].emitterName + '">' + emitters[i].emitterName + '</option>');
+            }
+
+
+            controlsMenu.find('h4').height($('#emitter-select').height() * 2);
+
+            emitterSel.click(function (event) {
+                var emitter;
+                if (emitterSel.val() === 'master') {
+                    controlsMenu.find('.channel-select').css('visibility', 'hidden');
+                    emitter = effect;
+                } else {
+                    controlsMenu.find('.channel-select').css('visibility', 'visible');
+                    for (var i = 0; i < effect.emitters.length; i++) {
+                        if (effect.emitters[i].emitterName === emitterSel.val()) {
+                            emitter = effect.emitters[i];
+                            break;
+                        }
+                    }
+                }
+
+                var gConfig = emitter.opts.graphablesConfig,
+                    $settings = $(controlsMenu.find('p select.graph-select:visible'));
+
+                $settings.children('.slider-opt').each(function (index, element) {
+                    element.selected = true;
+                });
+
+                $settings.children('.graph-opt').each(function (index, element) {
+                    var flag = $(element).closest('p')[0].childNodes[0].nodeValue.toUpperCase() + '_BIT';
+                    if (gConfig & ParticleEffect.GRAPHABLE_FLAGS[flag]) {
+                        element.selected = true;
+                    }
+                });
+
+            });
+        }
 
         for (var opt in guiOpts) {
             var grp = $('<p>'),
@@ -67,7 +200,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
             grp.addClass('options-menu-p')
                 .text(opt)
-                .appendTo(graphMenu);
+                .appendTo(controlsMenu);
 
             grsel.addClass('menu-select graph-select')
                 .css('clear', 'both')
@@ -145,7 +278,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
         }
 
         // set inital state of graph-selects based on effect.opts.graphablesConfig
-        $(graphMenu.find('p select.graph-select'))
+        $(controlsMenu.find('p select.graph-select'))
             .each(function (index, element) {
 
             var flag = $(element).closest('p')[0].childNodes[0].nodeValue.toUpperCase() + '_BIT';
@@ -162,183 +295,185 @@ PEE.optionsMenu = (function ($, window, undefined) {
             .appendTo(optionsMenu)
             .append('<h4 class="menu-heading">Textures</h4>');
 
-        for (var i = 0; i < emitters.length; i++) {
-            var tp = $('<p>'),
-                inp = $('<input>'),
-                img = $('<img>')
-            tp.addClass('options-menu-p')
-                .text(emitters[i].emitterName)
-                .append('<img src="images/transparency.png" class="transparency-img">')
-                .appendTo(textDiv);
-            // file input tag;
-            inp.attr('type', 'file').css('display', 'none').appendTo(tp);
+        createTextureList();
 
-            // replace menu image with selected image;
-            inp.on('change', function (event) {
-                var file = this.files[0],
-                    newImg = $('<img>'),
-                    $self = $(this);
+        textDiv.on('emitter-added emitter-removed', function (event) {
+            $('#textures-div p').remove();
+            createTextureList();
+        });
 
-                newImg.attr({
+        function createTextureList () {
+            for (var i = 0; i < emitters.length; i++) {
+                var tp = $('<p>'),
+                    inp = $('<input>'),
+                    img = $('<img>')
+                tp.addClass('options-menu-p')
+                    .text(emitters[i].emitterName)
+                    .append('<img src="images/transparency.png" class="transparency-img">')
+                    .appendTo(textDiv);
+                // file input tag;
+                inp.attr('type', 'file').css('display', 'none').appendTo(tp);
+
+                // replace menu image with selected image;
+                inp.on('change', function (event) {
+                    var file = this.files[0],
+                        newImg = $('<img>'),
+                        $self = $(this);
+
+                    newImg.attr({
+                        height: 32,
+                        width: 32
+                    }).addClass('text-p-img')
+                        .click(function (event) {
+                        $self.click();
+                    });
+
+                    newImg.get(0).file = file;
+                    $self.data('img').remove();
+                    $self.data('img', newImg);
+
+                    var timg = $self.data('p').find('.transparency-img');
+                    newImg.insertAfter(timg);
+
+                    // read the image into the img tag;
+                    var reader = new FileReader();
+                    reader.onload = (function (aImg) {
+                        return function (e) {
+                            aImg.onload = function (event) {
+                                var safety = 0,
+                                    ht = aImg.height,
+                                    wt = aImg.width;
+
+                                while ((ht % 2) === 0 && ht > 1) {
+                                    if (safety++ > 1000) {
+                                        console.error('Infinite Loop');
+                                        break;
+                                    }
+                                    ht /= 2;
+                                }
+                                while ((wt % 2) === 0 && wt > 1) {
+                                    if (safety++ > 1000) {
+                                        console.error('Infinite Loop');
+                                        break;
+                                    }
+                                    wt /= 2;
+                                }
+                                console.log(ht, wt);
+                                if (ht !== 1 || wt !== 1) {
+                                    alert('Texture dimensions must be a <a href="http://en.wikipedia.org/wiki/Power_of_two">power of two</a>.');
+                                } else {
+                                    //replace the emitter texture with the new image                ;
+                                    try {
+                                        effect.textureManager('replace')(aImg, $self.data('index'));
+                                        effect.emitters[$self.data('index')].opts.textSource = e.target.result;
+                                    } catch (e) {
+                                        console.error(e.message);
+                                    }
+                                }
+                            };
+                            aImg.src = e.target.result;
+                        };
+                    })(newImg.get(0));
+                    reader.readAsDataURL(file);
+                });
+                // since input is display:hidden, its coresponding menu image;
+                // is saved as jquery data;
+                inp.data('img', img);
+                // as well as its corresponding p tag;
+                inp.data('p', tp);
+                // and the coresponing emitter;
+                inp.data('emitter', emitters[i]);
+                inp.data('index', i);
+                // likewise, the menu images' coresponding input tag;
+                // is saved as jquery data;
+                img.data('input', inp);
+                img.attr({
+                    src: emitters[i].opts.textSource,
                     height: 32,
                     width: 32
-                }).addClass('text-p-img')
+                })
+                    .addClass('text-p-img').appendTo(tp)
+                    // when the image is clicked, the input's;
+                    // click event is triggered;
                     .click(function (event) {
-                    $self.click();
+                    $(this).data('input').click();
                 });
-
-                newImg.get(0).file = file;
-                $self.data('img').remove();
-                $self.data('img', newImg);
-                //$self.data('p').append(newImg);
-                var timg = $self.data('p').find('.transparency-img');
-                newImg.insertAfter(timg);
-                // read the image into the img tag;
-                var reader = new FileReader();
-                reader.onload = (function (aImg) {
-                    return function (e) {
-                        aImg.onload = function (event) {
-//replace the emitter texture with the new image                ;
-                            effect.textureManager('replace')(aImg, $self.data('index'));
-                        };
-                        aImg.src = e.target.result;
-                    };
-                })(newImg.get(0));
-                reader.readAsDataURL(file);
-            });
-            // since input is display:hidden, its coresponding menu image;
-            // is saved as jquery data;
-            inp.data('img', img);
-            // as well as its corresponding p tag;
-            inp.data('p', tp);
-            // and the coresponing emitter;
-            inp.data('emitter', emitters[i]);
-            inp.data('index', i);
-            // likewise, the menu images' coresponding input tag;
-            // is saved as jquery data;
-            img.data('input', inp);
-            img.attr({
-                src: emitters[i].opts.textSource,
-                height: 32,
-                width: 32
-            })
-                .addClass('text-p-img').appendTo(tp)
-                // when the image is clicked, the input's;
-                // click event is triggered;
-                .click(function (event) {
-                $(this).data('input').click();
-            });
+            }
         }
 
         // toolbars
         var emittersMenu = $('<div>').addClass('menu-div-right')
             .attr('id', 'toolbars-div')
-            .appendTo(optionsMenu),
-            tbnames = [];
-
-        emitters.forEach(function (element, index, array) {
-            tbnames.push(element.emitterName);
-        })
-        tbnames.unshift('master');
+            .appendTo(optionsMenu);
 
         $('<h5>').addClass('menu-heading')
             .text('Toolbars')
             .appendTo(emittersMenu);
-        for (var i = 0; i < tbnames.length; i++) {
-            var tp = $('<p>').addClass('options-menu-p')
-                , tbSel = $('<select>');
 
-            tp.text(tbnames[i]).appendTo(emittersMenu);
-            tbSel.addClass('menu-select tb-select')
-                .appendTo(tp);
-            if (tbnames[i] === 'master') {
-                tbSel.append('<option value="show">Open</option>')
-                    .append('<option value="hide">Hidden</option>');
-            } else {
-                tbSel.append('<option value="hide">Hidden</option>')
-                    .append('<option value="show">Open</option>');
-            }
-            tbSel.data('toolbar-name', tbnames[i])
-                .click(function (event) {
-                var $this = $(this);
+        createToolbarList();
 
-                if ($this.val() === 'show') {
-                    $('.toolbar').each(function (index, element) {
-                        if ($(element).data('master') && $this.data('toolbar-name') === 'master') {
-                            $(element).css('visibility', 'visible');
-                            $(element).trigger('mousedown');
-                        } else if ($(element).data('emitter').emitterName === $this.data('toolbar-name')) {
-                            $(element).css('visibility', 'visible');
-                            $(element).trigger('mousedown');
-                        }
-                    });
-                } else if ($this.val() === 'hide') {
-                    $('.toolbar').each(function (index, element) {
-                        if ($(element).data('master') && $this.data('toolbar-name') === 'master') {
-                            $(element).css('visibility', 'hidden');
-                        } else if ($(element).data('emitter').emitterName === $this.data('toolbar-name')) {
-                            $(element).css('visibility', 'hidden');
-                        }
-                    });
-                }
-            });
-        }
-
-        var gmh = $('#graph-menu').height(),
-            tmh = $('#textures-div').height(),
-            emh = $('#toolbars-div').height();
-
-        if (tmh + emh < gmh) {
-            $('#toolbars-div').height(gmh - tmh)
-        }
-
-        // file actions
-        var fileActions = $('<div id="file-actions">').addClass('menu-div-full');
-        optionsMenu.append(fileActions);
-        fileActions
-            .append('<h4 class="menu-heading">File Actions</h4>')
-            .append('<button id="save-btn">')
-            .append('<button id="load-btn">')
-            .append('<input id="load-input">');
-
-        $('#save-btn').text('Save Effect').click(function (event) {
-            try {
-                var save = []
-                    , json
-                    , blob;
-
-                for (var i = 0; i < emitters.length; i++) {
-                    save.push(emitters[i].opts);
-                }
-
-                json = JSON.stringify(save, undefined, 2);
-
-                blob = new Blob([json], {type: 'application/json'});
-                saveAs(blob, "effect.json");
-            } catch (e) {
-                console.error('error saving effect.\n%o\n%o', emitters, save);
-            }
+        emittersMenu.on('emitter-added emitter-removed', function (event) {
+            $('#toolbars-div .options-menu-p').remove();
+            createToolbarList();
         });
-        $('#load-btn').text('Load Effect').click(function (event) {
-            $('#load-input').click();
-        });
-        $('#load-input').css('display', 'none').attr('type', 'file').on('change', function (event) {
-            var file = this.files[0],
-                reader = new FileReader();
 
-            reader.onload = function (event) {
-                $('#load-btn').text(file.name);
-                var effectData = JSON.parse(event.currentTarget.result);
-                emitters.length = effectData.length;
-                for (var i = 0; i < effectData.length; i++) {
-                    for (var opt in effectData[i]) {
-                        emitters[i][opt] = effectData[i][opt];
+        function createToolbarList () {
+            var tbnames = [];
+
+            emitters.forEach(function (element, index, array) {
+                tbnames.push(element.emitterName);
+            })
+            tbnames.unshift('master');
+
+            for (var i = 0; i < tbnames.length; i++) {
+                var tp = $('<p>').addClass('options-menu-p')
+                    , tbSel = $('<select>');
+
+                tp.text(tbnames[i]).appendTo(emittersMenu);
+                tbSel.addClass('menu-select tb-select')
+                    .appendTo(tp);
+                if (tbnames[i] === 'master') {
+                    tbSel.append('<option value="show">Open</option>')
+                        .append('<option value="hide">Hidden</option>');
+                } else {
+                    tbSel.append('<option value="hide">Hidden</option>')
+                        .append('<option value="show">Open</option>');
+                }
+                tbSel.data('toolbar-name', tbnames[i])
+                    .click(function (event) {
+                    var $this = $(this);
+
+                    if ($this.val() === 'show') {
+                        $('.toolbar').each(function (index, element) {
+                            if ($(element).data('master') && $this.data('toolbar-name') === 'master') {
+                                $(element).css('visibility', 'visible');
+                                $(element).trigger('mousedown');
+                            } else if ($(element).data('emitter').emitterName === $this.data('toolbar-name')) {
+                                $(element).css('visibility', 'visible');
+                                $(element).trigger('mousedown');
+                            }
+                        });
+                    } else if ($this.val() === 'hide') {
+                        $('.toolbar').each(function (index, element) {
+                            if ($(element).data('master') && $this.data('toolbar-name') === 'master') {
+                                $(element).css('visibility', 'hidden');
+                            } else if ($(element).data('emitter').emitterName === $this.data('toolbar-name')) {
+                                $(element).css('visibility', 'hidden');
+                            }
+                        });
                     }
-                }
-            };
+                });
+            }
 
-            reader.readAsText(file);
-        });
+            var gmh = $('#graph-menu').height(),
+                tmh = $('#textures-div').height(),
+                emh = $('#toolbars-div').height();
+
+            if (tmh + emh < gmh) {
+                $('#toolbars-div').height(gmh - tmh)
+            }
+        }
+
 
         $(window).on('load resize', function (event) {
             if (!$('#options-menu').data('max-height-set')) {
