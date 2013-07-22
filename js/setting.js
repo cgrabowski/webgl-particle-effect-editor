@@ -10,31 +10,35 @@ PEE.setting = (function ($, window, undefined) {
 
     return function (tb, name, guiOpt, master) {
 
-        var settingTainer = $('<div>'),
-            sliderTainer = $('<div>'),
-            minSpan = $('<span class="min-span">'),
-            maxSpan = $('<span class="max-span">');
+        var emitter = tb.data('emitter'),
+            $settingTainer = $('<div>'),
+            $sliderTainer = $('<div>'),
+            $minSpan = $('<span class="min-span">'),
+            $maxSpan = $('<span class="max-span">');
 
-        settingTainer.addClass('setting-tainer')
+        $settingTainer.addClass('setting-tainer')
             .data('name', name)
             .data('guiOpt', guiOpt)
             .appendTo(tb);
-        $('<h5>').text(name).appendTo(settingTainer);
+        $('<h5>').text(name).appendTo($settingTainer);
 
         // create sliders for opts with a min and max;
         if (guiOpt.length === 4) {
-            sliderTainer.slider({
+            $sliderTainer.slider({
                 min: guiOpt[0],
                 values: [guiOpt[1], guiOpt[2]],
                 max: guiOpt[3],
                 range: true,
                 step: (guiOpt[3] - guiOpt[0]) / 1000,
                 slide: function (event, ui) {
-                    var emitter = $(ui.handle).closest('.toolbar').data().emitter,
-                        tainer = $(ui.handle).closest('.setting-tainer'),
+                    var tainer = $(ui.handle).closest('.setting-tainer'),
                         key = tainer.data().name;
 
+                    emitter = $($(ui.handle).closest('.toolbar')[0]).data().emitter;
+
                     if (master) {
+                        emitter[0].effect.opts['min' + name.capitalize()] = ui.values[0];
+                        emitter[0].effect.opts['max' + name.capitalize()] = ui.values[1];
                         for (var i = 0; (i < emitter.length) || (i < 1); i++) {
                             emitter[i].opts['min' + name.capitalize()] = ui.values[0];
                             emitter[i].opts['max' + name.capitalize()] = ui.values[1];
@@ -52,15 +56,16 @@ PEE.setting = (function ($, window, undefined) {
                     tainer.find('a:last-child').attr('title', ui.values[1]);
                 }
             })
-                .appendTo(settingTainer);
-            settingTainer.find('.ui-slider .ui-slider-handle:nth-child(2)').attr('title', guiOpt[1]);
-            settingTainer.find('.ui-slider .ui-slider-handle:last-child').attr('title', guiOpt[2]);
-            minSpan.text(guiOpt[0]);
-            maxSpan.text(guiOpt[3]);
+                .appendTo($settingTainer);
+
+            $settingTainer.find('.ui-slider .ui-slider-handle:nth-child(2)').attr('title', guiOpt[1]);
+            $settingTainer.find('.ui-slider .ui-slider-handle:last-child').attr('title', guiOpt[2]);
+            $minSpan.text(guiOpt[0]);
+            $maxSpan.text(guiOpt[3]);
 
             // create sliders for opts with only one value
         } else {
-            sliderTainer.slider({
+            $sliderTainer.slider({
                 min: guiOpt[0],
                 value: guiOpt[1],
                 max: guiOpt[2],
@@ -69,10 +74,10 @@ PEE.setting = (function ($, window, undefined) {
                     var emitter = $(ui.handle).closest('.toolbar').data().emitter;
 
                     if (master) {
+                        emitter[0].effect.opts[name] = ui.value;
                         for (var i = 0; i < emitter.length; i++) {
                             emitter[i].opts[name] = ui.value;
                         }
-
                         guiOpt[1] = ui.value;
 
                     } else {
@@ -82,16 +87,16 @@ PEE.setting = (function ($, window, undefined) {
                     $(ui.handle).attr('title', ui.value);
                 }
             })
-                .appendTo(settingTainer);
-            settingTainer.find('.ui-slider .ui-slider-handle:last-child').attr('title', guiOpt[1]);
-            minSpan.text(guiOpt[0]);
-            maxSpan.text(guiOpt[2]);
+                .appendTo($settingTainer);
+            $settingTainer.find('.ui-slider .ui-slider-handle:last-child').attr('title', guiOpt[1]);
+            $minSpan.text(guiOpt[0]);
+            $maxSpan.text(guiOpt[2]);
         }
 
-        sliderTainer.closest('.setting-tainer').prepend(minSpan).prepend(maxSpan);
+        $sliderTainer.closest('.setting-tainer').prepend($minSpan).prepend($maxSpan);
 
         // change slider limits on click
-        sliderTainer.siblings('span').click(function limitClick (event) {
+        $sliderTainer.siblings('span').click(function limitClick (event) {
             var $this = $(this),
                 $input = $('<input class="limit-input" name="" value="' + $this.text() + '">'),
                 emitter = $this.closest('.toolbar').data().emitter,
@@ -100,8 +105,9 @@ PEE.setting = (function ($, window, undefined) {
             // these classes identify an input as a min or max input;
             if ($this.hasClass('min-span')) {
                 $input.addClass('limit-input-min');
-            }
-            else {
+            } else if ($this.hasClass('max-span-left')) {
+                $input.addClass('limit-input-max-left');
+            } else {
                 $input.addClass('limit-input-max');
             }
             $this.replaceWith($input);
@@ -111,7 +117,7 @@ PEE.setting = (function ($, window, undefined) {
 
                 var sl = $input.siblings('.ui-slider'),
                     newLimit = parseFloat($input.val().replace(/^[^-][^0-9\.]/g, "")),
-                    guiOpt = sl.closest('.setting-tainer').data('guiOpt');                
+                    guiOpt = sl.closest('.setting-tainer').data('guiOpt');
 
                 // check if val is NaN
                 if (!(newLimit < Infinity)) {
@@ -189,9 +195,23 @@ PEE.setting = (function ($, window, undefined) {
             }
         });
 
+        // emitter settings that are set to use the master channel are darkened        
+        if (!master) {
+            $settingTainer.css('color', '#303030')
+                .find('.ui-slider, .ui-slider-handle').css('background-color', '#303030')
+                .andSelf().find('.ui-slider-handle').css('background-color', '#303030');
+        }
+
+        if (!master && ParticleEffect.CHANNEL_FLAGS[$settingTainer.data('name').toUpperCase() + '_BIT'] & emitter.opts.channelConfig) {
+
+            $settingTainer.css('color', 'rgb(224, 224, 224)')
+                .find('.ui-slider').css('background-color', 'rgb(160, 160, 160)')
+                .andSelf().find('.ui-slider-handle').css('background-color', 'rgb(224, 224, 224)');
+        }
+
         for (var g = 0; g < ParticleEffect.GRAPHABLES.length; g++) {
             if (name === ParticleEffect.GRAPHABLES[g]) {
-                PEE.settingGraph(settingTainer, name, master);
+                PEE.settingGraph($settingTainer, name, master);
             }
         }
     }

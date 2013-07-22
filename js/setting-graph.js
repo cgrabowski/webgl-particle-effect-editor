@@ -11,8 +11,7 @@ PEE.settingGraph = (function ($, window, undefined) {
             $textElem = $(svg('text')),
             ht = settingTainer.height() * 3,
             wt = settingTainer.width() - 16;
-
-
+        
         $svg.addClass('graph-svg')
             .appendTo(settingTainer)
             .data('name', name)
@@ -144,7 +143,8 @@ PEE.settingGraph = (function ($, window, undefined) {
             flag = setting.toUpperCase() + '_BIT';
 
         if ($svg.closest('.toolbar').data('master')) {
-            var gConfig = effect.opts.graphablesConfig,
+            effect.opts = effect.opts || {} // WTF? in FF
+            var gConfig = (effect.opts.graphablesConfig) ? effect.opts.graphablesConfig : 0,
                 minData = effect.opts['min' + setting.capitalize() + 'Graph']
                 || ParticleEffect.BASE_GRAPH_ARRAY,
                 maxData = effect.opts['max' + setting.capitalize() + 'Graph']
@@ -164,11 +164,16 @@ PEE.settingGraph = (function ($, window, undefined) {
         if (gConfig & ParticleEffect.GRAPHABLE_FLAGS[flag]) {
             $svg.css('display', 'block');
             $svg.data('slider').css('display', 'none');
-            $svg.data('slider').siblings('span').css('display', 'none');
+            $svg.siblings('.max-span')
+                .detach()
+                .removeClass('max-span')
+                .addClass('max-span-left')
+                .insertBefore(settingTainer.find('h5'));
+            $svg.siblings('.min-span').detach().insertAfter($svg);
+            $svg.parent().css('padding-bottom', '6px');
         } else {
             $svg.css('display', 'none');
             $svg.data('slider').css('display', 'block');
-            $svg.data('slider').siblings('span').css('display', 'block');
         }
 
         // plot left-most and right-most points for both the min and max lines
@@ -190,6 +195,23 @@ PEE.settingGraph = (function ($, window, undefined) {
 
         connectTheDots($svg, 'max');
         connectTheDots($svg, 'min');
+
+        // if not master and channel is set to useMaster, darken all the graph elements
+        if (!master) {
+            var emitter = $(settingTainer.closest('.toolbar')[0]).data('emitter');
+            if (!(ParticleEffect.CHANNEL_FLAGS[name.toUpperCase() + '_BIT'] & emitter.opts.channelConfig)) {
+
+                $svg.css('color', '#303030')
+                    .find('.ui-slider, .ui-slider-handle').css('background-color', '#303030')
+                    .andSelf().find('.ui-slider-handle').css('background-color', '#303030');
+
+                $svg.find('.gridline-horiz, .gridline-vert').attr('stroke', '#303030');
+                $svg.find('text').attr('fill', '#303030');
+                $svg.find('rect, .minline, .maxline').attr('stroke-width', '0');
+                $svg.find('circle').attr({'stroke-width': 0, r: 0});
+
+            }
+        }
 
         $('line').on('mouseout', function (event) {
             return false;

@@ -117,6 +117,12 @@ PEE.gui = (function ($, window, undefined) {
 
             }
 
+            $('#container').append('<div id="create-tb">');
+
+            $('#create-tb').css({visibility: 'hidden'}).on('emitter-added', function (event) {
+                PEE.toolbar(emitters[emitters.length - 1], tbOpts);
+            });
+
             // create the page header
             header();
 

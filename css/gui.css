@@ -198,7 +198,7 @@ header, .toolbar, #options-menu, button, input, select, #add-emitter-div, #delet
     float: right;
 }
 
-.min-span, .max-span{
+.min-span, .max-span, .max-span-left {
     position: absolute;
     cursor: pointer;
 }
@@ -209,6 +209,10 @@ header, .toolbar, #options-menu, button, input, select, #add-emitter-div, #delet
 
 .max-span {
     right: 0px;
+}
+
+.max-span-left {
+    left: 0px;
 }
 
 .limit-input {
@@ -226,4 +230,9 @@ header, .toolbar, #options-menu, button, input, select, #add-emitter-div, #delet
 .limit-input-max {
     right: 0px;
     text-align: right;
+}
+
+.limit-input-max-left {
+    left: 0px;
+    text-align: left;
 }

@@ -177,15 +177,28 @@ PEE.optionsMenu = (function ($, window, undefined) {
                 }
 
                 var gConfig = emitter.opts.graphablesConfig,
-                    $settings = $(controlsMenu.find('p select.graph-select:visible'));
+                    cConfig = emitter.opts.channelConfig,
+                    $graphSelects = $(controlsMenu.find('p select.graph-select:visible')),
+                    $channelSelects = $(controlsMenu.find('p select.channel-select'));
 
-                $settings.children('.slider-opt').each(function (index, element) {
+                $graphSelects.children('.slider-opt').each(function (index, element) {
                     element.selected = true;
                 });
 
-                $settings.children('.graph-opt').each(function (index, element) {
+                $graphSelects.children('.graph-opt').each(function (index, element) {
                     var flag = $(element).closest('p')[0].childNodes[0].nodeValue.toUpperCase() + '_BIT';
                     if (gConfig & ParticleEffect.GRAPHABLE_FLAGS[flag]) {
+                        element.selected = true;
+                    }
+                });
+
+                $channelSelects.children('.use-master-opt').each(function (index, element) {
+                    element.selected = true;
+                });
+
+                $channelSelects.children('.use-self-opt').each(function (index, element) {
+                    var flag = $(element).closest('p')[0].childNodes[0].nodeValue.toUpperCase() + '_BIT';
+                    if (cConfig & ParticleEffect.CHANNEL_FLAGS[flag]) {
                         element.selected = true;
                     }
                 });
@@ -210,6 +223,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
                 .data('name', opt)
 
                 .click(function (event) {
+
                 var $this = $(this),
                     $tb,
                     emitter;
@@ -228,16 +242,31 @@ PEE.optionsMenu = (function ($, window, undefined) {
                     if ($svg.data('name') === $this.data('name')) {
                         if ($this.val() === 'graph') {
                             emitter.enableGraphed(ParticleEffect.GRAPHABLE_FLAGS[flag]);
-                            $svg.data('slider').css('display', 'none').siblings('span').css('display', 'none');
+                            $svg.data('slider').css('display', 'none');
                             $svg.css('display', 'block');
+                            $svg.siblings('.max-span').detach()
+                                .removeClass('max-span')
+                                .addClass('max-span-left')
+                                .insertBefore($svg.siblings('h5'));
+                            $svg.siblings('.min-span').detach()
+                                .insertAfter($svg);
+                            $svg.parent().css('padding-bottom', '6px');
                         } else if ($this.val() === 'slider') {
                             emitter.disableGraphed(ParticleEffect.GRAPHABLE_FLAGS[flag]);
-                            $svg.data('slider').css('display', 'block')
-                                .siblings('span').css('display', 'inline');
+                            $svg.data('slider').css('display', 'block');
+                            $svg.siblings('.max-span-left').detach()
+                                .removeClass('max-span-left')
+                                .addClass('max-span')
+                                .insertBefore($svg.siblings('h5'));
+                            $svg.siblings('.min-span').detach()
+                                .insertBefore($svg.siblings('h5'));
+                            $svg.parent().css('padding-bottom', '0px');
                             $svg.css('display', 'none');
+
                         }
                     }
                 });
+
             });
 
             if (opt.match(/numParticles|life|delay/)) {
@@ -265,10 +294,43 @@ PEE.optionsMenu = (function ($, window, undefined) {
                         emitter = ($tb.data('master')) ? effect : $tb.data('emitter');
                     }
                 });
+
                 if ($this.val() === 'useSelf') {
                     emitter.useOwnChannel(ParticleEffect.CHANNEL_FLAGS[flag]);
+
+                    $tb.find('.setting-tainer').each(function (index, element) {
+                        var $element = $(element);
+
+                        if ($element.find('h5').text() === $this.data('name')) {
+                            $element.css('color', 'rgb(224, 224, 224)')
+                                .find('.ui-slider').css('background-color', 'rgb(160, 160, 160)')
+                                .andSelf().find('.ui-slider-handle').css('background-color', 'rgb(224, 224, 224)');
+
+                            $element.find('.gridline-horiz, .gridline-vert').attr('stroke', '#FFF');
+                            $element.find('text').attr('fill', '#A0A0A0');
+                            $element.find('rect, .minline, .maxline').attr('stroke-width', '2');
+                            $element.find('circle').attr({'stroke-width': 1, r: 4});
+                        }
+
+                    });
+
                 } else if ($this.val() === 'useMaster') {
                     emitter.useMasterChannel(ParticleEffect.CHANNEL_FLAGS[flag]);
+
+                    $tb.find('.setting-tainer').each(function (index, element) {
+                        var $element = $(element);
+
+                        if ($element.find('h5').text() === $this.data('name')) {
+                            $element.css('color', '#303030')
+                                .find('.ui-slider, .ui-slider-handle').css('background-color', '#303030')
+                            $element.find('.ui-slider-handle').css('background-color', '#303030');
+
+                            $element.find('.gridline-horiz, .gridline-vert').attr('stroke', '#303030');
+                            $element.find('text').attr('fill', '#303030');
+                            $element.find('rect, .minline, .maxline').attr('stroke-width', 0);
+                            $element.find('circle').attr({'stroke-width': 0, r: 0});
+                        }
+                    });
                 }
 
             });
