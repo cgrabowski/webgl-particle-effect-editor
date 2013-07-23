@@ -15,13 +15,13 @@ header {
     border-bottom: 1px solid #000;
 }
 
-button, select, #add-emitter-div, #delete-emitter-div, #add-emitter-input {
+button, select, #add-emitter-div, #delete-emitter-div, #add-emitter-input, #reset-confirm-div {
     color: #E0E0E0;
     border: 3px solid #000;
     cursor: pointer;
 }
 
-header, .toolbar, #options-menu, button, input, select, #add-emitter-div, #delete-emitter-div {    
+header, .toolbar, #options-menu, button, input, select, #add-emitter-div, #delete-emitter-div, #reset-confirm-div {    
     background:#404040;
 }
 
@@ -36,14 +36,14 @@ header, .toolbar, #options-menu, button, input, select, #add-emitter-div, #delet
     position: absolute;
     right: 0px;
     top: 29px;
-    z-index: 1000000;
+    z-index: 1000;
     width: 27%;
     min-width: 405px;
     padding: 0px;
     border-top: 10px solid black;
 }
 
-#add-emitter-div, #delete-emitter-div {
+#add-emitter-div, #delete-emitter-div, #reset-confirm-div {
     text-align: center;
     position: absolute;
     width: 100px;

@@ -11,8 +11,10 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
         // Actions
         var actions = $('<div id="actions">').addClass('menu-div-full');
+
         optionsMenu.prepend(actions);
         actions
+            .append('<button id="reset-btn">')
             .append('<h4 class="menu-heading">Actions</h4>')
             .append('<button id="save-btn">')
             .append('<button id="load-btn">')
@@ -20,6 +22,47 @@ PEE.optionsMenu = (function ($, window, undefined) {
             .append('<button id="add-emitter">');
         $('<button id="delete-emitter">').insertBefore($('#add-emitter'));
 
+        $('#reset-btn').text('Reset GUI and Effect Data')
+            .css('float', 'right')
+            .prependTo(actions)
+            .click(confirmReset);
+
+        function confirmReset (event) {
+            $('<div>').attr('id', 'reset-confirm-div')
+                .css({width: $('#reset-btn').width(), right: 0, top: 0})
+                .html('Are you sure you want<br />to reset everything? <button id="reset-confirm-btn">OK</button><button id="reset-cancel-btn">Cancel</button>')
+                .appendTo('#actions');
+
+            $('#reset-confirm-btn').click(resetEverything);
+
+            $(window).on('keyup.cancelReset', function (event) {
+                if (event.keyCode === 27) {
+                    cancelReset(event);
+                }
+            });
+
+            $('*').not('#reset-confirm-div').one('click.cancelReset', cancelReset);
+
+            return false;
+        }
+
+        function cancelReset (event) {
+            $('#reset-confirm-div').remove();
+            $('*').off('click.cancelReset');
+            $(window).off('keyup.cancelReset');
+        }
+
+        function resetEverything (event) {
+            $(window).off('unload');
+            try {
+                localStorage.setItem('emittersOpts', null);
+                localStorage.setItem('guiOpts', null);
+                localStorage.setItem('effectsOpts', null);
+            } catch (e) {
+                localStorage.setItem('unloaderror', e.message);
+            }
+            location.reload();
+        }
 
         $('#save-btn').text('Save Effect').click(function (event) {
             try {
@@ -66,15 +109,31 @@ PEE.optionsMenu = (function ($, window, undefined) {
             .click(function (event) {
             event.stopImmediatePropagation();
 
-            $(window).on('keyup', function addEmitterKeyListener (event) {
+            $(window).on('keyup.createEmitter', function (event) {
                 if (event.keyCode === 13) {
-                    createEmitter();
-                    $(window).off('keyup');
+                    createEmitter($('#add-emitter-input').val());
+                    $('#add-emitter-div').remove();
                 } else if (event.keyCode === 27) {
-                    $(window).off('keyup');
+                    $('#add-emitter-div').remove();
+                }
+
+                if (event.keyCode === 13 || event.keyCode === 27) {
+                    $('div').off('click.createEmitter');
+                    $(window).off('keyup.createEmitter');
                 }
             });
 
+            $('div').on('click.createEmitter', function (event) {
+                event.stopImmediatePropagation();
+                if ($(event.target).is('#add-emitter-input')) {
+                    return false;
+                }
+                createEmitter($('#add-emitter-input').val());
+                $('div').off('click.createEmitter');
+                $(window).off('keyup.createEmitter');
+                $('#add-emitter-div').remove();
+                return false;
+            });
 
             $('<div>').attr('id', 'add-emitter-div')
                 .appendTo('#actions')
@@ -83,16 +142,18 @@ PEE.optionsMenu = (function ($, window, undefined) {
             $('#add-emitter-input').focus();
         });
 
-        function createEmitter () {
+        function createEmitter (name) {
+            $('div').off('click.createEmitter');
+            $(window).off('keyup.createEmitter');
+            name = name || null;
 
             var image = new Image();
 
             effect.textureSources.push('images/particle.png');
             image.onload = function () {
                 effect.textureManager('add')(image);
-                effect.emitters.push(new ParticleEmitter(effect, {textSource: 'images/particle.png', emitterName: $('#add-emitter-input').val()}, effect.emitters.length));
+                effect.emitters.push(new ParticleEmitter(effect, {textSource: 'images/particle.png', emitterName: name}, effect.emitters.length));
                 effect.emitters[effect.emitters.length - 1].bindTexture = effect.textureManager('bind')(effect.emitters.length - 1);
-                $('#add-emitter-div').remove();
                 $('div').trigger('emitter-added');
             };
             image.src = 'images/particle.png';
@@ -104,6 +165,13 @@ PEE.optionsMenu = (function ($, window, undefined) {
             .click(function (event) {
 
             event.stopImmediatePropagation();
+
+            $(window).on('keyup.deleteEmitter', function (event) {
+                if (event.keyCode === 27) {
+                    $('#delete-emitter-div').remove();
+                    $(window).off('keyup.deleteEmitter');
+                }
+            });
 
             if ($('#delete-emitter-div').length > 0) {
                 $('#delete-emitter-div').remove();
