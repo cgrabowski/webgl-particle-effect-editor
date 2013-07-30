@@ -55,9 +55,10 @@ PEE.optionsMenu = (function ($, window, undefined) {
         function resetEverything (event) {
             $(window).off('unload');
             try {
+                localStorage.setItem('unloaderror', 'no unload error');
+
                 localStorage.setItem('emittersOpts', null);
-                localStorage.setItem('guiOpts', null);
-                localStorage.setItem('effectsOpts', null);
+                localStorage.setItem('effectOpts', null);
             } catch (e) {
                 localStorage.setItem('unloaderror', e.message);
             }
@@ -199,6 +200,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
         });
 
+
         // Controls
         var graphables = ParticleEffect.GRAPHABLES,
             controlsMenu = $('<div>');
@@ -274,7 +276,14 @@ PEE.optionsMenu = (function ($, window, undefined) {
             });
         }
 
-        for (var opt in guiOpts) {
+        for (var opt in ParticleEffect.DEFAULT_OPTS) {
+
+            if (opt.match(/min|emitterName|textSource/)) {
+                continue;
+            } else if (opt.match('max')) {
+                opt = opt[3].toLowerCase() + opt.substr(4);
+            }
+
             var grp = $('<p>'),
                 grsel = $('<select>'),
                 useMasterSel = $('<select>');
@@ -298,8 +307,8 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
                 $('.toolbar').each(function (index, element) {
                     if ($(element).data('name') === $('#emitter-select').val()) {
-                        $tb = $(element),
-                            emitter = ($tb.data('master')) ? effect : $tb.data('emitter');
+                        $tb = $(element);
+                        emitter = ($tb.data('master')) ? effect : $tb.data('emitter');
                     }
                 });
 
@@ -576,9 +585,11 @@ PEE.optionsMenu = (function ($, window, undefined) {
                     if ($this.val() === 'show') {
                         $('.toolbar').each(function (index, element) {
                             if ($(element).data('master') && $this.data('toolbar-name') === 'master') {
+                                $('#emitter-select').val('master').click();
                                 $(element).css('visibility', 'visible');
                                 $(element).trigger('mousedown');
                             } else if ($(element).data('emitter').emitterName === $this.data('toolbar-name')) {
+                                $('#emitter-select').val($(element).data('emitter').emitterName).click();
                                 $(element).css('visibility', 'visible');
                                 $(element).trigger('mousedown');
                             }

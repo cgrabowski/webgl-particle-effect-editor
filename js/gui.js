@@ -1,3 +1,9 @@
+String.prototype.capitalize = function () {
+    return this.replace(/^./, function (char) {
+        return char.toUpperCase();
+    });
+};
+
 var PEE = PEE || {};
 
 $(window).on('PEE-loaded', function (event) {
@@ -8,11 +14,9 @@ PEE.gui = (function ($, window, undefined) {
     var gl,
         effect,
         emitters,
-        guiOpts,
         engineCallback;
 
     return function () {
-
         $(document).ready(function () {
             // If an error occured during last unload, log it;
             if (localStorage.getItem('unloaderror')) {
@@ -21,8 +25,6 @@ PEE.gui = (function ($, window, undefined) {
 
             var effectOpts = JSON.parse(localStorage.getItem('effectOpts')),
                 emittersOpts = JSON.parse(localStorage.getItem('emittersOpts'));
-
-            guiOpts = JSON.parse(localStorage.getItem('guiOpts') || null);
 
             // create canvas and container
             $('<div>').attr('id', 'container').appendTo($('body'));
@@ -35,9 +37,9 @@ PEE.gui = (function ($, window, undefined) {
             engine($('#webgl-canvas')[0], effectOpts, emittersOpts, function (GL, eff, render) {
                 gl = GL
                 effect = eff;
-                effect.opts = effectOpts;
                 emitters = eff.emitters;
                 engineCallback = render;
+                // trigger an event to get this and previous callbacks off the stack
                 $(window).trigger('engine-loaded');
             });
         });
@@ -47,75 +49,50 @@ PEE.gui = (function ($, window, undefined) {
             // WebGL debugging
             WebGLDebugUtils.makeDebugContext(gl);
 
-            if (guiOpts) {
-                guiOpts.forEach(function (element, index, array) {
-                    for (var i = 0; i < emitters.length; i++) {
+            // Build toolbars using default gui opts and emitter opts;
+            for (var i = 0; i < emitters.length + 1; i++) {
 
-                        if (element.emitterName === 'master') {
-                            PEE.toolbar(emitters, element, true);
+                var tbOpts = {},
+                    eo = (emitters[i]) ? emitters[i].opts : effect.opts;
 
-                        } else if (emitters[i].emitterName === element.emitterName) {
-                            PEE.toolbar(emitters[i], element);
-                        }
-                    }
-                });
+                // Watch out for an easy reference bug here
+                tbOpts.numParticles = eo.numParticlesLimits.slice();
+                tbOpts.life = eo.lifeLimits.slice();
+                tbOpts.delay = eo.delayLimits.slice();
 
-            } else {
+                tbOpts.offsetX = eo.minOffsetXGraph.slice(2, 4);
+                tbOpts.offsetY = eo.minOffsetXGraph.slice(2, 4);
+                tbOpts.offsetZ = eo.minOffsetXGraph.slice(2, 4);
 
-                var guiOpts = {
-                    numParticles: [1, 300],
-                    /**/
-                    life: [1, 10000],
-                    /**/
-                    delay: [0, 10000],
-                    /**/
-                    offsetX: [-10, 10],
-                    /**/
-                    offsetY: [-10, 10],
-                    /**/
-                    offsetZ: [-20, 0],
-                    /**/
-                    speed: [1, 1000],
-                    /**/
-                    directionX: [-1, 1],
-                    /**/
-                    directionY: [-1, 1],
-                    /**/
-                    directionZ: [-1, 1],
-                    /**/
-                    rotation: [-7200, 7200]
-                };
+                tbOpts.speed = eo.minSpeedGraph.slice(2, 4);
+                tbOpts.directionX = eo.minDirectionXGraph.slice(2, 4);
+                tbOpts.directionY = eo.minDirectionYGraph.slice(2, 4);
+                tbOpts.directionZ = eo.minDirectionZGraph.slice(2, 4);
+                tbOpts.rotation = eo.minRotationGraph.slice(2, 4);
 
-                // Build toolbars using default gui opts and emitter opts;
-                for (var i = 0; i < emitters.length; i++) {
+                tbOpts.numParticles.splice(1, 0, eo.numParticles);
+                tbOpts.life.splice(1, 0, eo.minLife, eo.maxLife);
+                tbOpts.delay.splice(1, 0, eo.minDelay, eo.maxDelay);
 
-                    var tbOpts = {},
-                        eo = emitters[i].opts;
+                tbOpts.offsetX.splice(1, 0, eo.minOffsetX, eo.maxOffsetX);
+                tbOpts.offsetY.splice(1, 0, eo.minOffsetY, eo.maxOffsetY);
+                tbOpts.offsetZ.splice(1, 0, eo.minOffsetZ, eo.maxOffsetZ);
+                tbOpts.speed.splice(1, 0, eo.minSpeed, eo.maxSpeed);
+                tbOpts.directionX.splice(1, 0, eo.minDirectionX, eo.maxDirectionX);
+                tbOpts.directionY.splice(1, 0, eo.minDirectionY, eo.maxDirectionY);
+                tbOpts.directionZ.splice(1, 0, eo.minDirectionZ, eo.maxDirectionZ);
+                tbOpts.rotation.splice(1, 0, eo.minRotation, eo.maxRotation);
 
-                    for (var opt in guiOpts) {
-                        tbOpts[opt] = guiOpts[opt].slice();
-                    }
-
-                    tbOpts.numParticles.splice(1, 0, eo.numParticles);
-                    tbOpts.life.splice(1, 0, eo.minLife, eo.maxLife);
-                    tbOpts.delay.splice(1, 0, eo.minDelay, eo.maxDelay);
-                    tbOpts.offsetX.splice(1, 0, eo.minOffsetX, eo.maxOffsetX);
-                    tbOpts.offsetY.splice(1, 0, eo.minOffsetY, eo.maxOffsetY);
-                    tbOpts.offsetZ.splice(1, 0, eo.minOffsetZ, eo.maxOffsetZ);
-                    tbOpts.speed.splice(1, 0, eo.minSpeed, eo.maxSpeed);
-                    tbOpts.directionX.splice(1, 0, eo.minDirectionX, eo.maxDirectionX);
-                    tbOpts.directionY.splice(1, 0, eo.minDirectionY, eo.maxDirectionY);
-                    tbOpts.directionZ.splice(1, 0, eo.minDirectionZ, eo.maxDirectionZ);
-                    tbOpts.rotation.splice(1, 0, eo.minRotation, eo.maxRotation);
-
+                if (i < emitters.length) {
                     // create emitter toolbars
                     PEE.toolbar(emitters[i], tbOpts);
+                } else {
+                    // create the master toolbar (it affects all emitters)
+                    PEE.toolbar(emitters, tbOpts, true);
                 }
-
-                // create the master toolbar (it affects all emitters)
-                PEE.toolbar(emitters, tbOpts, true);
-
             }
+
+            //}
 
             $('#container').append('<div id="create-tb">');
 
@@ -124,10 +101,9 @@ PEE.gui = (function ($, window, undefined) {
             });
 
             // create the page header
-            header();
+            header();            
 
-            // create the options menu
-            PEE.optionsMenu(effect, emitters, guiOpts);
+            PEE.optionsMenu(effect, emitters);
 
             // gui is complete, so begin rendering
             engineCallback();
@@ -146,22 +122,16 @@ PEE.gui = (function ($, window, undefined) {
         // Save any errors when unloading the window so they can be read onload;
         $(window).unload(function (event) {
             try {
-                var emittersOpts = [],
-                    guiOpts = [];
+                var emittersOpts = [];
 
                 for (var i = 0; i < effect.emitters.length; i++) {
                     emittersOpts.push(effect.emitters[i].opts)
                     emittersOpts[i].emitterName = effect.emitters[i].emitterName;
                 }
 
-                $('.toolbar').each(function (index, element) {
-                    guiOpts.push($(element).data('tbOpts'));
-                });
-
                 localStorage.setItem('unloaderror', 'no unload error');
 
                 localStorage.setItem('emittersOpts', JSON.stringify(emittersOpts));
-                localStorage.setItem('guiOpts', JSON.stringify(guiOpts));
                 localStorage.setItem('effectOpts', JSON.stringify(effect.opts));
             } catch (e) {
                 localStorage.setItem('unloaderror', e.message);

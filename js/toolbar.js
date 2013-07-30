@@ -140,11 +140,11 @@ PEE.toolbar = (function ($, window, undefined) {
                 window.dispatchEvent(new CustomEvent('resume'));
             },
             resize: function (event, ui) {
-                ui.element.find('.toolbar-header').width(tb.width() - 6);
+                ui.element.find('.toolbar-header').width(tb.width() - 3);
                 ui.element.mCustomScrollbar('update');
             }});
 
-        tb.find('.toolbar-header').width(tb.width() - 6);
+        tb.find('.toolbar-header').width(tb.width() - 3);
         tb.find('.mCSB_draggerContainer').css('top', '35px');
 
         if (!master) {

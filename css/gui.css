@@ -136,9 +136,7 @@ header, .toolbar, #options-menu, button, input, select, #add-emitter-div, #delet
     width: 200px;
     height: 312px;
     padding-bottom: 12px;
-    padding-bottom: 1rem;  
-    padding-left: 3px;
-    padding-left:0.25rem;
+    padding-bottom: 1rem; 
     padding-right: 3px;
     padding-right: 0.25rem;
     border: 1px solid black;
@@ -166,6 +164,8 @@ header, .toolbar, #options-menu, button, input, select, #add-emitter-div, #delet
 .setting-tainer {
     margin-top: 16px;
     margin-top: 1.5rem;
+    padding-left: 2px;
+    padding-right: 2px;
 }
 
 .mCSB_container {
@@ -201,6 +201,10 @@ header, .toolbar, #options-menu, button, input, select, #add-emitter-div, #delet
 .min-span, .max-span, .max-span-left {
     position: absolute;
     cursor: pointer;
+    padding-left: 6px;
+    padding-left: 0.5rem;    
+    padding-right: 6px;
+    padding-right: 0.5rem;
 }
 
 .min-span {

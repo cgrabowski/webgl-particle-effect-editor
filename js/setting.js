@@ -1,11 +1,5 @@
 var PEE = PEE || {};
 
-String.prototype.capitalize = function () {
-    return this.replace(/^./, function (char) {
-        return char.toUpperCase();
-    });
-};
-
 PEE.setting = (function ($, window, undefined) {
 
     return function (tb, name, guiOpt, master) {
@@ -34,19 +28,13 @@ PEE.setting = (function ($, window, undefined) {
                     var tainer = $(ui.handle).closest('.setting-tainer'),
                         key = tainer.data().name;
 
-                    emitter = $($(ui.handle).closest('.toolbar')[0]).data().emitter;
+                    emitter = $(ui.handle).closest('.toolbar').first().data().emitter;
 
+                    // X-Z chars at the end of the var 'name' are already capitalized
+                    // so only the first letter of name needs to be capitaized
                     if (master) {
-                        emitter[0].effect.opts['min' + name.capitalize()] = ui.values[0];
-                        emitter[0].effect.opts['max' + name.capitalize()] = ui.values[1];
-                        for (var i = 0; (i < emitter.length) || (i < 1); i++) {
-                            emitter[i].opts['min' + name.capitalize()] = ui.values[0];
-                            emitter[i].opts['max' + name.capitalize()] = ui.values[1];
-                        }
-
-                        guiOpt[1] = ui.values[0];
-                        guiOpt[2] = ui.values[1];
-
+                        guiOpt[1] = emitter[0].effect.opts['min' + name.capitalize()] = ui.values[0];
+                        guiOpt[2] = emitter[0].effect.opts['max' + name.capitalize()] = ui.values[1];
                     } else {
                         guiOpt[1] = emitter.opts['min' + name.capitalize()] = ui.values[0];
                         guiOpt[2] = emitter.opts['max' + name.capitalize()] = ui.values[1];
@@ -74,11 +62,7 @@ PEE.setting = (function ($, window, undefined) {
                     var emitter = $(ui.handle).closest('.toolbar').data().emitter;
 
                     if (master) {
-                        emitter[0].effect.opts[name] = ui.value;
-                        for (var i = 0; i < emitter.length; i++) {
-                            emitter[i].opts[name] = ui.value;
-                        }
-                        guiOpt[1] = ui.value;
+                        guiOpt[1] = emitter[0].effect.opts[name] = ui.value;
 
                     } else {
                         guiOpt[1] = emitter.opts[name] = ui.value;
@@ -105,31 +89,51 @@ PEE.setting = (function ($, window, undefined) {
             // these classes identify an input as a min or max input;
             if ($this.hasClass('min-span')) {
                 $input.addClass('limit-input-min');
+
             } else if ($this.hasClass('max-span-left')) {
                 $input.addClass('limit-input-max-left');
+
             } else {
                 $input.addClass('limit-input-max');
             }
+
             $this.replaceWith($input);
 
             // close input when anything is clicked
-            $('body, span, a').one('click', function setLimit (event) {
+            $('body, span, a').on('click', function setLimit (event) {
 
-                var sl = $input.siblings('.ui-slider'),
+                var emitter = $input.closest('.toolbar').first().data('emitter'),
+                    sl = $input.siblings('.ui-slider'),
                     newLimit = parseFloat($input.val().replace(/^[^-][^0-9\.]/g, "")),
+                    name = sl.closest('.setting-tainer').data('name'),
                     guiOpt = sl.closest('.setting-tainer').data('guiOpt');
 
-                // check if val is NaN
+                var whoseOpts = (emitter.length) ? emitter[0].effect : emitter;
+
+                // check if val is a valid Number
                 if (!(newLimit < Infinity)) {
                     newLimit = $this.text();
                 }
 
-                if ($input.hasClass('limit-input-min')) {
-                    sl.slider('option', 'min', newLimit);
-                    guiOpt[0] = newLimit;
-                } else {
-                    sl.slider('option', 'max', newLimit);
-                    guiOpt[guiOpt.length - 1] = newLimit;
+                var minOrMax = parseInt($input.hasClass('limit-input-min'), 10),
+                    minOrMaxStr = ($input.hasClass('limit-input-min')) ? 'min' : 'max';
+
+                sl.slider('option', minOrMaxStr, newLimit);
+
+                guiOpt[(minOrMax) ? 0 : guiOpt.length - 1] = newLimit;
+
+                for (var i = 0; i < ParticleEffect.GRAPHABLES.length; i++) {
+                    if (name === ParticleEffect.GRAPHABLES[i]) {
+                        console.log('min' + name.capitalize() + 'Graph');
+                        whoseOpts.opts['min' + name.capitalize() + 'Graph'].splice(2 + minOrMax, 1, newLimit);
+                        whoseOpts.opts['max' + name.capitalize() + 'Graph'].splice(2 + minOrMax, 1, newLimit);
+                        break;
+
+                    } else if (name.match(/numParticles|life|delay/)) {
+                        console.log('blah');
+                        whoseOpts.opts[name + 'Limits'].splice(minOrMax, 1, newLimit);
+                        break;
+                    }
                 }
 
                 // set new emitter opt value(s)
@@ -137,17 +141,12 @@ PEE.setting = (function ($, window, undefined) {
                 // for emitters with min and max (two slider handles)
                 if (sl.slider('values').length === 2) {
                     var vals = sl.slider('values');
-                    sl.find('.ui-slider-handle:nth-child(2)').attr('title', guiOpt[1]);
-                    sl.find('.ui-slider-handle:last-child').attr('title', guiOpt[2]);
+                    sl.find('.ui-slider-handle:nth-child(2)').attr('title', vals[0]);
+                    sl.find('.ui-slider-handle:last-child').attr('title', vals[1]);
 
                     if (master) {
-                        for (var i = 0; i < emitter.length; i++) {
-                            emitter[i].opts['min' + name.capitalize()] = vals[0];
-                            emitter[i].opts['max' + name.capitalize()] = vals[1];
-                        }
-
-                        guiOpt[1] = vals[0];
-                        guiOpt[2] = vals[1];
+                        guiOpt[1] = emitter[0].effect.opts['min' + name.capitalize()] = vals[0];
+                        guiOpt[2] = emitter[0].effect.opts['max' + name.capitalize()] = vals[1];
 
                     } else {
                         guiOpt[1] = emitter.opts['min' + name.capitalize()] = vals[0];
@@ -157,14 +156,10 @@ PEE.setting = (function ($, window, undefined) {
                     // for emitters with one val (one slider handle)
                 } else {
                     var val = sl.slider('value');
-                    sl.find('.ui-slider-handle:last-child').attr('title', guiOpt[1]);
+                    sl.find('.ui-slider-handle:last-child').attr('title', val);
 
                     if (master) {
-                        for (var i = 0; (i < emitter.length) || (i < 1); i++) {
-                            emitter[i].opts[name] = val;
-                        }
-
-                        guiOpt[1] = val;
+                        guiOpt[1] = emitter[0].opts[name] = val;
 
                     } else {
                         guiOpt[1] = emitter.opts[name] = val;
