@@ -1,3 +1,8 @@
+/* div.toolbar-tainer contains the div.toolbar-header and div.toolbar.
+ * div.toolbar contains all of the div.setting-tainers.
+ * div.toolbar contains the jQuery data.
+ */
+
 var PEE = PEE || {};
 
 PEE.toolbar = (function ($, window, undefined) {
@@ -5,56 +10,80 @@ PEE.toolbar = (function ($, window, undefined) {
 
     // toolbar builder
     return function toolbar (emitter, tbOpts, master) {
+        var tbTainer = $('<div>').addClass('toolbar-tainer'),
+            tb = $('<div>').addClass('toolbar');
 
-        var tb = $('<div>');
+        tbTainer.prependTo('#container');
 
-        if (master) {
-            tb.data('master', true);
-        }
-        tb.data('emitter', emitter);
-        tb.data('name', (tb.data('master')) ? 'master' : emitter.emitterName);
-        tbOpts.emitterName = (tb.data('master') ? 'master' : emitter.emitterName);
-        tb.data('tbOpts', tbOpts);
-
-        tb.draggable({snap: '#header, #container, .toolbar'})
-            .addClass('toolbar')
-            .prependTo('#container')
+        tb.prependTo(tbTainer)
             .css({
             position: 'absolute',
             right: '0px',
             top: $('header').height()
         });
 
+        if (master) {
+            tb.data('master', true);
+        }
+
+        tb.data('emitter', emitter);
+        tb.data('name', (tb.data('master')) ? 'master' : emitter.emitterName);
+        tb.data('tbOpts', tbOpts);
+
+        tbTainer.draggable({snap: '#header, #container, .toolbar-tainer'});
+
         // toolbar z-indexes are a first-in, last-out stack;
-        tb.mousedown(function (event) {
+        tbTainer.mousedown(function (event) {
             var self = this;
 
-            toolbarStack.forEach(function (val, ind, arr) {
-                if (toolbarStack[ind] === self) {
-                    toolbarStack.splice(ind, 1);
+            toolbarStack.forEach(function (val, index, array) {
+                if (toolbarStack[index] === self) {
+                    toolbarStack.splice(index, 1);
                 } else {
-                    $(toolbarStack[ind]).css('z-index', $(toolbarStack[ind]).css('z-index') - 1);
+                    $(toolbarStack[index]).css('z-index', $(toolbarStack[index]).css('z-index') - 1);
                 }
             });
 
             $(this).css('z-index', 100);
             toolbarStack.unshift(this);
-            if (toolbarStack.length > $('.toolbar').length) {
+            if (toolbarStack.length > $('.toolbar-tainer').length) {
                 toolbarStack.pop();
             }
             // prevent world transforms when interacting with toolbar
             return false;
         });
 
-        var header = $('<div class="toolbar-header">')
+        tbTainer.resizable({
+            handles: 's, e, w',
+            minWidth: 175,
+            start: function (event, ui) {
+                window.dispatchEvent(new CustomEvent('pause'));
+            },
+            stop: function (event, ui) {
+                window.dispatchEvent(new CustomEvent('resume'));
+            },
+            resize: function (event, ui) {
+                var $element = $(ui.element),
+                    $tbHeader = $element.find('.toolbar-header');
+
+                $tbHeader.width(tbTainer.width() - 3);
+                $element.find('.toolbar')
+                    .height($element.height() - $tbHeader.height())
+                    .mCustomScrollbar('update');
+            }});
+
+        var tbHeader = $('<div class="toolbar-header">')
             .text((master) ? "master" : emitter.emitterName)
-            .appendTo(tb);
+            .prependTo(tbTainer);
 
         $('<a href="" class="close"><img src="images/gui-close-grey.png"></a>')
-            .appendTo(header)
+            .appendTo(tbHeader)
+
             .click(function (event) {
-            var tb = $(this).closest('.toolbar');
-            tb.css('visibility', 'hidden');
+            var tbTainer = $(this).closest('.toolbar-tainer');
+
+            tbTainer.css('visibility', 'hidden');
+            tbTainer.find('.setting-tainer').css('visibility', 'hidden');
 
             $('.tb-select').each(function (index, element) {
                 var paraNodes = $(element).closest('.options-menu-p')[0].childNodes,
@@ -67,9 +96,8 @@ PEE.toolbar = (function ($, window, undefined) {
                     }
                 }
 
-                if (paraText === tb.find('.toolbar-header').text()) {
-
-                    $(element).val('hide');
+                if (paraText === tbTainer.find('.toolbar-header').text()) {
+                    $(element).val('hide').click();
                 }
             });
 
@@ -77,36 +105,41 @@ PEE.toolbar = (function ($, window, undefined) {
         });
 
         $('<a href="" class="up"><img src="images/gui-up-grey.png">')
-            .appendTo(header)
+            .appendTo(tbHeader)
+
             .click(function (event) {
             var $this = $(this),
-                tb = $this.closest('.toolbar');
-            tb.mCustomScrollbar('disable');
-            tb.resizable('disable');
-            tb.find('.setting-tainer').css('visibility', 'hidden');
-            tb.attr('data-height', tb.height());
-            tb.css('height', '0px');
-            $this.css('display', 'none')
-                .siblings('.down').css('display', 'block');
+                $tbTainer = $this.closest('.toolbar-tainer'),
+                $tb = $tbTainer.find('.toolbar');
+
+            $tbTainer.resizable('disable');
+            $tb.find('.setting-tainer').add($tb).add($tbTainer)
+                .css('visibility', 'hidden');
+            $tbTainer.find('.toolbar-header').css('visibility', 'visible');
+            $this.siblings('.down').css('display', 'block');
+            $this.css('display', 'none');
             return false;
         });
 
         $('<a href="" style="display: none" class="down"><img src="images/gui-down-grey.png"></a>')
-            .appendTo(header)
+            .appendTo(tbHeader)
+
             .click(function (event) {
             var $this = $(this),
-                tb = $this.closest('.toolbar');
-            tb.height(tb.attr('data-height'));
-            tb.removeAttr('data-height');
-            tb.find('.setting-tainer').css('visibility', 'visible');
-            $this.css('display', 'none')
-                .siblings('.up').css('display', 'block');
-            tb.resizable('enable');
-            tb.mCustomScrollbar('update');
+                $tbTainer = $this.closest('.toolbar-tainer').first(),
+                $tb = $tbTainer.find('.toolbar');
+
+            $tb.find('.setting-tainer').add($tb).add($tbTainer)
+                .css('visibility', 'visible');
+            $this.siblings('.up').css('display', 'block');
+            $this.css('display', 'none');
+            $tbTainer.resizable('enable');
+            $tb.mCustomScrollbar('update');
             return false;
         });
+
         for (var opt in tbOpts) {
-            if (opt.match(/emitterName/)) {
+            if (opt.match("emitterName")) {
                 continue;
             }
             PEE.setting(tb, opt, tbOpts[opt], master);
@@ -127,28 +160,15 @@ PEE.toolbar = (function ($, window, undefined) {
             }
         });
 
-        tb.find('.setting-tainer').first().css('padding-top', '24px');
+        tbTainer.find('.toolbar-header').width(tbTainer.width() - 3);
+        tbTainer.find('.mCSB_draggerContainer').css('top', '10px');
+        tbTainer.css('top', tbHeader.height() + 4);
+
         tb.find('.setting-tainer').last().css('padding-bottom', '12px');
-
-        tb.resizable({
-            handles: 's, e, w',
-            minWidth: 175,
-            start: function (event, ui) {
-                window.dispatchEvent(new CustomEvent('pause'));
-            },
-            stop: function (event, ui) {
-                window.dispatchEvent(new CustomEvent('resume'));
-            },
-            resize: function (event, ui) {
-                ui.element.find('.toolbar-header').width(tb.width() - 3);
-                ui.element.mCustomScrollbar('update');
-            }});
-
-        tb.find('.toolbar-header').width(tb.width() - 3);
-        tb.find('.mCSB_draggerContainer').css('top', '35px');
+        tb.css('height', tbTainer.height() - tbHeader.height());
 
         if (!master) {
-            tb.css('visibility', 'hidden');
+            tbTainer.css('visibility', 'hidden');
         }
     }
 

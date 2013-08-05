@@ -67,9 +67,9 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
         $('#save-btn').text('Save Effect').click(function (event) {
             try {
-                var save = []
-                    , json
-                    , blob;
+                var save = [],
+                    json,
+                    blob;
 
                 for (var i = 0; i < emitters.length; i++) {
                     save.push(emitters[i].opts);
@@ -87,7 +87,11 @@ PEE.optionsMenu = (function ($, window, undefined) {
         $('#load-btn').text('Load Effect').click(function (event) {
             $('#load-input').click();
         });
-        $('#load-input').css('display', 'none').attr('type', 'file').on('change', function (event) {
+
+        $('#load-input').css('display', 'none')
+            .attr('type', 'file')
+
+            .on('change', function (event) {
             var file = this.files[0],
                 reader = new FileReader();
 
@@ -107,6 +111,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
         $('#add-emitter').text('Add Emitter')
             .addClass('btn-right')
+
             .click(function (event) {
             event.stopImmediatePropagation();
 
@@ -153,12 +158,11 @@ PEE.optionsMenu = (function ($, window, undefined) {
             effect.textureSources.push('images/particle.png');
             image.onload = function () {
                 effect.textureManager('add')(image);
-                effect.emitters.push(new ParticleEmitter(effect, {textSource: 'images/particle.png', emitterName: name}, effect.emitters.length));
+                effect.emitters.push(new PEE.ParticleEmitter(effect, {textSource: 'images/particle.png', emitterName: name}, effect.emitters.length));
                 effect.emitters[effect.emitters.length - 1].bindTexture = effect.textureManager('bind')(effect.emitters.length - 1);
                 $('div').trigger('emitter-added');
             };
             image.src = 'images/particle.png';
-
         }
 
         $('#delete-emitter').text('Delete Emitter')
@@ -202,8 +206,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
 
         // Controls
-        var graphables = ParticleEffect.GRAPHABLES,
-            controlsMenu = $('<div>');
+        var controlsMenu = $('<div>');
 
         controlsMenu.addClass('menu-div-left')
             .attr('id', 'graph-menu')
@@ -219,6 +222,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
         function createEmitterSelect () {
             var emitterSel = $('<select>');
+
             controlsMenu.prepend(emitterSel);
             emitterSel.attr('id', 'emitter-select')
                 .addClass('menu-select')
@@ -228,14 +232,15 @@ PEE.optionsMenu = (function ($, window, undefined) {
                 emitterSel.append('<option value="' + emitters[i].emitterName + '">' + emitters[i].emitterName + '</option>');
             }
 
-
             controlsMenu.find('h4').height($('#emitter-select').height() * 2);
 
             emitterSel.click(function (event) {
                 var emitter;
+
                 if (emitterSel.val() === 'master') {
                     controlsMenu.find('.channel-select').css('visibility', 'hidden');
                     emitter = effect;
+
                 } else {
                     controlsMenu.find('.channel-select').css('visibility', 'visible');
                     for (var i = 0; i < effect.emitters.length; i++) {
@@ -257,7 +262,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
                 $graphSelects.children('.graph-opt').each(function (index, element) {
                     var flag = $(element).closest('p')[0].childNodes[0].nodeValue.toUpperCase() + '_BIT';
-                    if (gConfig & ParticleEffect.GRAPHABLE_FLAGS[flag]) {
+                    if (gConfig & PEE.ParticleEffect.GRAPHABLE_FLAGS[flag]) {
                         element.selected = true;
                     }
                 });
@@ -268,7 +273,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
                 $channelSelects.children('.use-self-opt').each(function (index, element) {
                     var flag = $(element).closest('p')[0].childNodes[0].nodeValue.toUpperCase() + '_BIT';
-                    if (cConfig & ParticleEffect.CHANNEL_FLAGS[flag]) {
+                    if (cConfig & PEE.ParticleEffect.CHANNEL_FLAGS[flag]) {
                         element.selected = true;
                     }
                 });
@@ -276,7 +281,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
             });
         }
 
-        for (var opt in ParticleEffect.DEFAULT_OPTS) {
+        for (var opt in PEE.ParticleEffect.DEFAULT_OPTS) {
 
             if (opt.match(/min|emitterName|textSource/)) {
                 continue;
@@ -318,7 +323,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
                     if ($svg.data('name') === $this.data('name')) {
                         if ($this.val() === 'graph') {
-                            emitter.enableGraphed(ParticleEffect.GRAPHABLE_FLAGS[flag]);
+                            emitter.enableGraphed(PEE.ParticleEffect.GRAPHABLE_FLAGS[flag]);
                             $svg.data('slider').css('display', 'none');
                             $svg.css('display', 'block');
                             $svg.siblings('.max-span').detach()
@@ -329,7 +334,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
                                 .insertAfter($svg);
                             $svg.parent().css('padding-bottom', '6px');
                         } else if ($this.val() === 'slider') {
-                            emitter.disableGraphed(ParticleEffect.GRAPHABLE_FLAGS[flag]);
+                            emitter.disableGraphed(PEE.ParticleEffect.GRAPHABLE_FLAGS[flag]);
                             $svg.data('slider').css('display', 'block');
                             $svg.siblings('.max-span-left').detach()
                                 .removeClass('max-span-left')
@@ -373,7 +378,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
                 });
 
                 if ($this.val() === 'useSelf') {
-                    emitter.useOwnChannel(ParticleEffect.CHANNEL_FLAGS[flag]);
+                    emitter.useOwnChannel(PEE.ParticleEffect.CHANNEL_FLAGS[flag]);
 
                     $tb.find('.setting-tainer').each(function (index, element) {
                         var $element = $(element);
@@ -392,7 +397,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
                     });
 
                 } else if ($this.val() === 'useMaster') {
-                    emitter.useMasterChannel(ParticleEffect.CHANNEL_FLAGS[flag]);
+                    emitter.useMasterChannel(PEE.ParticleEffect.CHANNEL_FLAGS[flag]);
 
                     $tb.find('.setting-tainer').each(function (index, element) {
                         var $element = $(element);
@@ -421,12 +426,10 @@ PEE.optionsMenu = (function ($, window, undefined) {
             .each(function (index, element) {
 
             var flag = $(element).closest('p')[0].childNodes[0].nodeValue.toUpperCase() + '_BIT';
-            if (effect.opts.graphablesConfig & ParticleEffect.GRAPHABLE_FLAGS[flag]) {
+            if (effect.opts.graphablesConfig & PEE.ParticleEffect.GRAPHABLE_FLAGS[flag]) {
                 $(element).children('.graph-opt')[0].selected = true;
             }
         });
-
-
 
         // textures
         var textDiv = $('<div>').addClass('menu-div-right')
@@ -561,12 +564,13 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
             emitters.forEach(function (element, index, array) {
                 tbnames.push(element.emitterName);
-            })
+            });
+
             tbnames.unshift('master');
 
             for (var i = 0; i < tbnames.length; i++) {
-                var tp = $('<p>').addClass('options-menu-p')
-                    , tbSel = $('<select>');
+                var tp = $('<p>').addClass('options-menu-p'),
+                    tbSel = $('<select>');
 
                 tp.text(tbnames[i]).appendTo(emittersMenu);
                 tbSel.addClass('menu-select tb-select')
@@ -578,28 +582,55 @@ PEE.optionsMenu = (function ($, window, undefined) {
                     tbSel.append('<option value="hide">Hidden</option>')
                         .append('<option value="show">Open</option>');
                 }
-                tbSel.data('toolbar-name', tbnames[i])
-                    .click(function (event) {
-                    var $this = $(this);
 
-                    if ($this.val() === 'show') {
-                        $('.toolbar').each(function (index, element) {
-                            if ($(element).data('master') && $this.data('toolbar-name') === 'master') {
+                tbSel.data('toolbar-name', tbnames[i])
+
+                    .click(function (event) {
+                    var $select = $(this);
+
+                    if ($select.val() === 'show') {
+                        $('.toolbar-tainer').each(function (index, element) {
+                            var $element = $(element),
+                                $tb = $element.find('.toolbar');
+
+                            if ($tb.data('master') && $select.data('toolbar-name') === 'master') {
                                 $('#emitter-select').val('master').click();
-                                $(element).css('visibility', 'visible');
-                                $(element).trigger('mousedown');
-                            } else if ($(element).data('emitter').emitterName === $this.data('toolbar-name')) {
-                                $('#emitter-select').val($(element).data('emitter').emitterName).click();
-                                $(element).css('visibility', 'visible');
-                                $(element).trigger('mousedown');
+                                $element.find('.toolbar-header').css('visibility', 'visible');
+
+                                if ($element.find('.toolbar-header .up').css('display') === 'block') {
+                                    $element.add($tb).css('visibility', 'visible');
+
+                                    $tb.find('.setting-tainer').css('visibility', 'visible');
+                                }
+                                $element.trigger('mousedown');
+
+                            } else if ($tb.data('emitter').emitterName === $select.data('toolbar-name')) {
+                                $('#emitter-select').val($tb.data('emitter').emitterName).click();
+
+                                $element.find('.toolbar-header').css('visibility', 'visible');
+
+                                if ($element.find('.toolbar-header .up').css('display') === 'block') {
+                                    $element.add($tb).css('visibility', 'visible');
+                                    $tb.find('.setting-tainer').css('visibility', 'visible');
+                                    $element.trigger('mousedown');
+                                }
                             }
                         });
-                    } else if ($this.val() === 'hide') {
-                        $('.toolbar').each(function (index, element) {
-                            if ($(element).data('master') && $this.data('toolbar-name') === 'master') {
-                                $(element).css('visibility', 'hidden');
-                            } else if ($(element).data('emitter').emitterName === $this.data('toolbar-name')) {
-                                $(element).css('visibility', 'hidden');
+
+                    } else if ($select.val() === 'hide') {
+                        $('.toolbar-tainer').each(function (index, element) {
+                            var $element = $(element),
+                                $tb = $element.find('.toolbar');
+
+                            if ($tb.data('master') && $select.data('toolbar-name') === 'master') {
+                                $element.add($tb).css('visibility', 'hidden');
+                                $element.find('.toolbar-header').css('visibility', 'hidden');
+                                $tb.find('.setting-tainer').css('visibility', 'hidden');
+
+                            } else if ($tb.data('emitter').emitterName === $select.data('toolbar-name')) {
+                                $element.add($tb).css('visibility', 'hidden');
+                                $element.find('.toolbar-header').css('visibility', 'hidden');
+                                $tb.find('.setting-tainer').css('visibility', 'hidden');
                             }
                         });
                     }
@@ -631,7 +662,5 @@ PEE.optionsMenu = (function ($, window, undefined) {
             }
         });
     }
-
-
 
 }(jQuery, window));

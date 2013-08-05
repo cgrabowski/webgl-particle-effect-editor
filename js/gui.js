@@ -34,7 +34,7 @@ PEE.gui = (function ($, window, undefined) {
 
 
             // call the effect engine, passing canvas, opts and callback;
-            engine($('#webgl-canvas')[0], effectOpts, emittersOpts, function (GL, eff, render) {
+            PEE.engine($('#webgl-canvas')[0], effectOpts, emittersOpts, function (GL, eff, render) {
                 gl = GL
                 effect = eff;
                 emitters = eff.emitters;
@@ -61,8 +61,8 @@ PEE.gui = (function ($, window, undefined) {
                 tbOpts.delay = eo.delayLimits.slice();
 
                 tbOpts.offsetX = eo.minOffsetXGraph.slice(2, 4);
-                tbOpts.offsetY = eo.minOffsetXGraph.slice(2, 4);
-                tbOpts.offsetZ = eo.minOffsetXGraph.slice(2, 4);
+                tbOpts.offsetY = eo.minOffsetYGraph.slice(2, 4);
+                tbOpts.offsetZ = eo.minOffsetZGraph.slice(2, 4);
 
                 tbOpts.speed = eo.minSpeedGraph.slice(2, 4);
                 tbOpts.directionX = eo.minDirectionXGraph.slice(2, 4);
@@ -101,7 +101,7 @@ PEE.gui = (function ($, window, undefined) {
             });
 
             // create the page header
-            header();            
+            header();
 
             PEE.optionsMenu(effect, emitters);
 
@@ -125,13 +125,13 @@ PEE.gui = (function ($, window, undefined) {
                 var emittersOpts = [];
 
                 for (var i = 0; i < effect.emitters.length; i++) {
-                    emittersOpts.push(effect.emitters[i].opts)
-                    emittersOpts[i].emitterName = effect.emitters[i].emitterName;
+                    emittersOpts.push(effect.emitters[i].opts);
                 }
 
                 localStorage.setItem('unloaderror', 'no unload error');
-
+                localStorage.removeItem('emittersOpts');
                 localStorage.setItem('emittersOpts', JSON.stringify(emittersOpts));
+                localStorage.removeItem('effectOpts');
                 localStorage.setItem('effectOpts', JSON.stringify(effect.opts));
             } catch (e) {
                 localStorage.setItem('unloaderror', e.message);

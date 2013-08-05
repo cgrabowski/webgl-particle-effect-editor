@@ -12,9 +12,8 @@ PEE.settingGraph = (function ($, window, undefined) {
             effect = (emitter.length) ? emitter[0].effect : emitter.effect,
             $svg = $(svg('svg')),
             $rect = $(svg('rect')),
-            $textElem = $(svg('text')),
             ht = settingTainer.height() * 3,
-            wt = settingTainer.width() - 16;
+            wt = settingTainer.width() - 25;
 
         $svg.addClass('graph-svg')
             .appendTo(settingTainer)
@@ -38,21 +37,12 @@ PEE.settingGraph = (function ($, window, undefined) {
         })
             .appendTo($svg);
 
-        $textElem.appendTo($svg)
-            .text('life')
-            .appendTo($svg);
-        $textElem.attr({
-            fill: '#A0A0A0',
-            x: ($svg.width() - $textElem[0].getBBox().width) / 2,
-            y: $svg.height() - (0.3 * $textElem.height())
-        });
-
-        $($svg.closest('.toolbar')[0]).on('resize', function (event, ui) {
+        $($svg.closest('.toolbar-tainer')[0]).on('resize', function (event, ui) {
             var $this = $(this),
-                $svg = $($this.find('svg')),
-                $rect = $($svg.find('rect')),
+                $svg = $this.find('svg'),
+                $rect = $svg.find('rect'),
                 ow = $svg.attr('width'),
-                nw = $this.width() - $this.find('.mCSB_scrollTools').width(),
+                nw = $this.find('.setting-tainer').width() - 10,
                 oh = $svg.attr('height'),
                 nh = nw * $svg.data('aspect');
             $svg.attr({
@@ -142,10 +132,10 @@ PEE.settingGraph = (function ($, window, undefined) {
             })
                 .appendTo($svg);
         }
-       
+
         var setting = $svg.closest('.setting-tainer').data('name'),
             flag = setting.toUpperCase() + '_BIT';
-        
+
         if ($svg.closest('.toolbar').data('master')) {
 
             var gConfig = effect.opts.graphablesConfig || 0,
@@ -160,7 +150,7 @@ PEE.settingGraph = (function ($, window, undefined) {
         }
 
         // on init make graph or slider visible based on graphablesConfig
-        if (gConfig & ParticleEffect.GRAPHABLE_FLAGS[flag]) {
+        if (gConfig & PEE.ParticleEffect.GRAPHABLE_FLAGS[flag]) {
             $svg.css('display', 'block');
             $svg.data('slider').css('display', 'none');
             $svg.siblings('.max-span')
@@ -180,18 +170,18 @@ PEE.settingGraph = (function ($, window, undefined) {
         // plot left-most and right-most points for both the min and max lines
         // this provides a little padding between the points and the
         // edge of the graph
-        plotPoint($svg, 4, ht - 4, 'minpoint');
-        plotPoint($svg, wt - 4, 4, 'minpoint');
-        plotPoint($svg, 2, ht - 4, 'maxpoint');
-        plotPoint($svg, wt - 4, 4, 'maxpoint');
+        plotPoint($svg, 4, (-minData[1] + 1) / 2 * ht, 'minpoint');
+        plotPoint($svg, wt - 4, (-minData[minData.length - 3] + 1) / 2 * ht, 'minpoint');
+        plotPoint($svg, 4, (-maxData[1] + 1) / 2 * ht, 'maxpoint');
+        plotPoint($svg, wt - 4, (-maxData[maxData.length - 3] + 1) / 2 * ht, 'maxpoint');
 
-        // plot points from saved graph data (except for left and right most points
+        // plot points from saved graph data (except for left- and right-most points
         for (var i = 4; i < minData.length - 5; i += 4) {
-            plotPoint($svg, minData[i] * $svg.width(), -minData[i + 1] * $svg.height(), 'minpoint');
+            plotPoint($svg, minData[i] * $svg.width(), (-minData[i + 1] + 1) / 2 * ht, 'minpoint');
         }
 
         for (var i = 4; i < maxData.length - 5; i += 4) {
-            plotPoint($svg, maxData[i] * $svg.width(), -maxData[i + 1] * $svg.height(), 'maxpoint');
+            plotPoint($svg, maxData[i] * $svg.width(), (-maxData[i + 1] + 1) / 2 * ht, 'maxpoint');
         }
 
         connectTheDots($svg, 'max');
@@ -200,7 +190,7 @@ PEE.settingGraph = (function ($, window, undefined) {
         // if not master and channel is set to useMaster, darken all the graph elements
         if (!master) {
             var emitter = $(settingTainer.closest('.toolbar')[0]).data('emitter');
-            if (!(ParticleEffect.CHANNEL_FLAGS[name.toUpperCase() + '_BIT'] & emitter.opts.channelConfig)) {
+            if (!(PEE.ParticleEffect.CHANNEL_FLAGS[name.toUpperCase() + '_BIT'] & emitter.opts.channelConfig)) {
 
                 $svg.css('color', '#303030')
                     .find('.ui-slider, .ui-slider-handle').css('background-color', '#303030')
@@ -241,7 +231,7 @@ PEE.settingGraph = (function ($, window, undefined) {
         });
 
         $svg.on('mousemove create', function (event) {
-            //event.stopImmediatePropagation();
+
             movePoint(event);
 
             //[x1, y1, min limit, max limit, x2, y2, V m, b, x3, y3, V m, b, [...]]
@@ -254,9 +244,10 @@ PEE.settingGraph = (function ($, window, undefined) {
                     max = emitter.opts['max' + name.capitalize() + 'Graph'];
             }
 
+            // rebuild the graph data array based on point locations
             $svg.find('.minpoint').each(function (index, element) {
                 min[index * 4] = element.getAttribute('cx') / $svg.width();
-                min[index * 4 + 1] = ($svg.height() - element.getAttribute('cy')) / $svg.height() * 2 - 1;
+                min[index * 4 + 1] = -(element.getAttribute('cy') / ($svg.height() * 0.5) - 1);
             });
 
             min.length = $svg.find('.minpoint').length * 4;
@@ -269,9 +260,10 @@ PEE.settingGraph = (function ($, window, undefined) {
                 min[k + 1] = -(min[k] * min[k - 2] - min[k - 1]);
             }
 
+            // rebuild the graph data array based on point locations
             $svg.find('.maxpoint').each(function (index, element) {
                 max[index * 4] = element.getAttribute('cx') / $svg.width();
-                max[index * 4 + 1] = ($svg.height() - element.getAttribute('cy')) / $svg.height() * 2 - 1;
+                max[index * 4 + 1] = -(element.getAttribute('cy') / ($svg.height() * 0.5) - 1);
             });
 
             max.length = $svg.find('.maxpoint').length * 4;

@@ -110,8 +110,7 @@ PEE.setting = (function ($, window, undefined) {
 
                 var whoseOpts = (emitter.length) ? emitter[0].effect : emitter;
 
-                // check if val is a valid Number
-                if (!(newLimit < Infinity)) {
+                if (isNaN(newLimit)) {
                     newLimit = $this.text();
                 }
 
@@ -122,9 +121,8 @@ PEE.setting = (function ($, window, undefined) {
 
                 guiOpt[(minOrMax) ? 0 : guiOpt.length - 1] = newLimit;
 
-                for (var i = 0; i < ParticleEffect.GRAPHABLES.length; i++) {
-                    if (name === ParticleEffect.GRAPHABLES[i]) {
-                        console.log('min' + name.capitalize() + 'Graph');
+                for (var i = 0; i < PEE.ParticleEffect.GRAPHABLES.length; i++) {
+                    if (name === PEE.ParticleEffect.GRAPHABLES[i]) {
                         whoseOpts.opts['min' + name.capitalize() + 'Graph'].splice(2 + minOrMax, 1, newLimit);
                         whoseOpts.opts['max' + name.capitalize() + 'Graph'].splice(2 + minOrMax, 1, newLimit);
                         break;
@@ -197,15 +195,15 @@ PEE.setting = (function ($, window, undefined) {
                 .andSelf().find('.ui-slider-handle').css('background-color', '#303030');
         }
 
-        if (!master && ParticleEffect.CHANNEL_FLAGS[$settingTainer.data('name').toUpperCase() + '_BIT'] & emitter.opts.channelConfig) {
+        if (!master && PEE.ParticleEffect.CHANNEL_FLAGS[$settingTainer.data('name').toUpperCase() + '_BIT'] & emitter.opts.channelConfig) {
 
             $settingTainer.css('color', 'rgb(224, 224, 224)')
                 .find('.ui-slider').css('background-color', 'rgb(160, 160, 160)')
                 .andSelf().find('.ui-slider-handle').css('background-color', 'rgb(224, 224, 224)');
         }
 
-        for (var g = 0; g < ParticleEffect.GRAPHABLES.length; g++) {
-            if (name === ParticleEffect.GRAPHABLES[g]) {
+        for (var g = 0; g < PEE.ParticleEffect.GRAPHABLES.length; g++) {
+            if (name === PEE.ParticleEffect.GRAPHABLES[g]) {
                 PEE.settingGraph($settingTainer, name, master);
             }
         }

@@ -15,14 +15,18 @@ header {
     border-bottom: 1px solid #000;
 }
 
+svg {
+    margin-left: 5px;
+}
+
 button, select, #add-emitter-div, #delete-emitter-div, #add-emitter-input, #reset-confirm-div {
     color: #E0E0E0;
     border: 3px solid #000;
     cursor: pointer;
 }
 
-header, .toolbar, #options-menu, button, input, select, #add-emitter-div, #delete-emitter-div, #reset-confirm-div {    
-    background:#404040;
+header, .toolbar-tainer, #options-menu, button, input, select, #add-emitter-div, #delete-emitter-div, #reset-confirm-div {    
+    background: #404040;
 }
 
 #container {
@@ -132,16 +136,21 @@ header, .toolbar, #options-menu, button, input, select, #add-emitter-div, #delet
     right: 0px;    
 }
 
-.toolbar {
+.toolbar-tainer {    
     width: 200px;
     height: 312px;
     padding-bottom: 12px;
     padding-bottom: 1rem; 
     padding-right: 3px;
     padding-right: 0.25rem;
-    border: 1px solid black;
+    border: 1px solid black; 
+    position: absolute;
     left: 0px;
-    z-index: 100;
+}
+
+.toolbar {
+    width: 100%; 
+    /* height set programmatically */
 }
 
 .toolbar-header {
@@ -153,12 +162,15 @@ header, .toolbar, #options-menu, button, input, select, #add-emitter-div, #delet
     padding-left: 0.5rem;
     padding-top: 4px;
     padding-top: 0.333rem;
-    text-align: left;
-    position: fixed;
-    width: 100%;
+    text-align: left;    
     border-bottom: 1px solid black;
     background: #404040;
-    z-index: 3;
+    /* width set programmatically */
+}
+
+.toolbar-header a, #options-menu-anchor{
+    float: right;
+    margin: 1px;
 }
 
 .setting-tainer {
@@ -166,6 +178,11 @@ header, .toolbar, #options-menu, button, input, select, #add-emitter-div, #delet
     margin-top: 1.5rem;
     padding-left: 2px;
     padding-right: 2px;
+}
+
+.setting-tainer:first-of-type {
+    margin-top: 8px;
+    margin-top: 0.75rem;
 }
 
 .mCSB_container {
@@ -183,11 +200,6 @@ header, .toolbar, #options-menu, button, input, select, #add-emitter-div, #delet
 
 .ui-slider-handle {
     background: #E0E0E0;
-}
-
-.toolbar-header a, #options-menu-anchor{
-    float: right;
-    margin: 1px;
 }
 
 #options-menu-anchor {
