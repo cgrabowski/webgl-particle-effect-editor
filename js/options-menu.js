@@ -1,9 +1,13 @@
 var PEE = PEE || {};
 
-PEE.optionsMenu = (function ($, window, undefined) {
+PEE.optionsMenu = (function($, window, undefined) {
+    var effect,
+            emitters;
 
     // options menu
-    return function (effect, emitters, guiOpts) {
+    return function(effectArg, emittersArg, guiOpts) {
+        effect = effectArg;
+        emitters = emittersArg;
 
         var optionsMenu = $('<div>').attr('id', 'options-menu');
 
@@ -14,28 +18,28 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
         optionsMenu.prepend(actions);
         actions
-            .append('<button id="reset-btn">')
-            .append('<h4 class="menu-heading">Actions</h4>')
-            .append('<button id="save-btn">')
-            .append('<button id="load-btn">')
-            .append('<input id="load-input">')
-            .append('<button id="add-emitter">');
+                .append('<button id="reset-btn">')
+                .append('<h4 class="menu-heading">Actions</h4>')
+                .append('<button id="save-btn">')
+                .append('<button id="load-btn">')
+                .append('<input id="load-input">')
+                .append('<button id="add-emitter">');
         $('<button id="delete-emitter">').insertBefore($('#add-emitter'));
 
         $('#reset-btn').text('Reset GUI and Effect Data')
-            .css('float', 'right')
-            .prependTo(actions)
-            .click(confirmReset);
+                .css('float', 'right')
+                .prependTo(actions)
+                .click(confirmReset);
 
-        function confirmReset (event) {
+        function confirmReset(event) {
             $('<div>').attr('id', 'reset-confirm-div')
-                .css({width: $('#reset-btn').width(), right: 0, top: 0})
-                .html('Are you sure you want<br />to reset everything? <button id="reset-confirm-btn">OK</button><button id="reset-cancel-btn">Cancel</button>')
-                .appendTo('#actions');
+                    .css({width: $('#reset-btn').width(), right: 0, top: 0})
+                    .html('Are you sure you want<br />to reset everything? <button id="reset-confirm-btn">OK</button><button id="reset-cancel-btn">Cancel</button>')
+                    .appendTo('#actions');
 
             $('#reset-confirm-btn').click(resetEverything);
 
-            $(window).on('keyup.cancelReset', function (event) {
+            $(window).on('keyup.cancelReset', function(event) {
                 if (event.keyCode === 27) {
                     cancelReset(event);
                 }
@@ -46,13 +50,13 @@ PEE.optionsMenu = (function ($, window, undefined) {
             return false;
         }
 
-        function cancelReset (event) {
+        function cancelReset(event) {
             $('#reset-confirm-div').remove();
             $('*').off('click.cancelReset');
             $(window).off('keyup.cancelReset');
         }
 
-        function resetEverything (event) {
+        function resetEverything(event) {
             $(window).off('unload');
             try {
                 localStorage.setItem('unloaderror', 'no unload error');
@@ -65,57 +69,111 @@ PEE.optionsMenu = (function ($, window, undefined) {
             location.reload();
         }
 
-        $('#save-btn').text('Save Effect').click(function (event) {
-            try {
-                var save = [],
+        $('#save-btn').text('Save Effect').click(function(event) {
+            event.stopImmediatePropagation();
+
+            $(window).on('keyup.saveEffect', function(event) {
+                if (event.keyCode === 13) {
+                    saveEffect($('#save-effect-input').val());
+                    $('#save-effect-div').remove();
+                } else if (event.keyCode === 27) {
+                    $('#save-effect-div').remove();
+                }
+
+                if (event.keyCode === 13 || event.keyCode === 27) {
+                    $('div').off('click.saveEffect');
+                    $(window).off('keyup.saveEffect');
+                }
+            });
+
+            $('div').on('click.saveEffect', function(event) {
+                event.stopImmediatePropagation();
+                if ($(event.target).is('#save-effect-input')) {
+                    return false;
+                }
+
+                saveEffect($('#save-effect-input').val());
+                $('div').off('click.createEmitter');
+                $(window).off('keyup.createEmitter');
+                $('#save-effect-div').remove();
+                return false;
+            });
+
+            $('<div>').attr('id', 'save-effect-div')
+                    .appendTo('#actions')
+                    .append('<input type="text" id="save-effect-input" />');
+
+            $('#save-effect-input').focus();
+        });
+
+        function saveEffect(fileName) {
+            var save = [],
                     json,
                     blob;
 
-                for (var i = 0; i < emitters.length; i++) {
-                    save.push(emitters[i].opts);
-                }
+            fileName = fileName || "effect";
 
+            for (var i = 0; i < emitters.length; i++) {
+                save.push(emitters[i].opts);
+            }
+            console.log(effect.opts);
+            save.unshift(effect.opts);
+
+            try {
                 json = JSON.stringify(save, undefined, 2);
-
                 blob = new Blob([json], {type: 'application/json'});
-                saveAs(blob, "effect.json");
+                saveAs(blob, fileName + ".json");
             } catch (e) {
                 console.error('error saving effect.\n%o\n%o', emitters, save);
             }
-        });
+        }
 
-        $('#load-btn').text('Load Effect').click(function (event) {
+
+        $('#load-btn').text('Load Effect').click(function(event) {
             $('#load-input').click();
         });
 
         $('#load-input').css('display', 'none')
-            .attr('type', 'file')
+                .attr('type', 'file')
 
-            .on('change', function (event) {
+                .on('change', function(event) {
             var file = this.files[0],
-                reader = new FileReader();
+                    reader = new FileReader();
 
-            reader.onload = function (event) {
+            reader.onload = function(event) {
                 $('#load-btn').text(file.name);
-                var effectData = JSON.parse(event.currentTarget.result);
-                emitters.length = effectData.length;
-                for (var i = 0; i < effectData.length; i++) {
-                    for (var opt in effectData[i]) {
-                        emitters[i][opt] = effectData[i][opt];
-                    }
-                }
+                var effectData = JSON.parse(event.currentTarget.result),
+                        oldEmitters = effect.emitters,
+                        newEffectOpts = effectData.shift();
+
+                window.dispatchEvent(new CustomEvent('pause'));
+                effect.textureManager('dispose')();
+                effect.shaderManager('dispose')();
+                delete window.effect;
+                oldEmitters.forEach(function(element, index, array) {
+                    delete array[index];
+                });
+                delete oldEmitters;
+
+                PEE.engine($('#webgl-canvas')[0], newEffectOpts, effectData, function(gl, effectArg, render) {
+                    effect = effectArg;
+                    emitters = effect.emitters;
+                    $('div').trigger('emitter-removed');
+                    $('div').trigger('emitter-added', effect);
+                    render();
+                });
             };
 
             reader.readAsText(file);
         });
 
         $('#add-emitter').text('Add Emitter')
-            .addClass('btn-right')
+                .addClass('btn-right')
 
-            .click(function (event) {
+                .click(function(event) {
             event.stopImmediatePropagation();
 
-            $(window).on('keyup.createEmitter', function (event) {
+            $(window).on('keyup.createEmitter', function(event) {
                 if (event.keyCode === 13) {
                     createEmitter($('#add-emitter-input').val());
                     $('#add-emitter-div').remove();
@@ -129,7 +187,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
                 }
             });
 
-            $('div').on('click.createEmitter', function (event) {
+            $('div').on('click.createEmitter', function(event) {
                 event.stopImmediatePropagation();
                 if ($(event.target).is('#add-emitter-input')) {
                     return false;
@@ -142,13 +200,14 @@ PEE.optionsMenu = (function ($, window, undefined) {
             });
 
             $('<div>').attr('id', 'add-emitter-div')
-                .appendTo('#actions')
-                .append('<input type="text" id="add-emitter-input" />');
+                    .appendTo('#actions')
+                    .append('<input type="text" id="add-emitter-input" />');
 
             $('#add-emitter-input').focus();
         });
 
-        function createEmitter (name) {
+        function createEmitter(name) {
+
             $('div').off('click.createEmitter');
             $(window).off('keyup.createEmitter');
             name = name || null;
@@ -156,7 +215,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
             var image = new Image();
 
             effect.textureSources.push('images/particle.png');
-            image.onload = function () {
+            image.onload = function() {
                 effect.textureManager('add')(image);
                 effect.emitters.push(new PEE.ParticleEmitter(effect, {textSource: 'images/particle.png', emitterName: name}, effect.emitters.length));
                 effect.emitters[effect.emitters.length - 1].bindTexture = effect.textureManager('bind')(effect.emitters.length - 1);
@@ -166,12 +225,12 @@ PEE.optionsMenu = (function ($, window, undefined) {
         }
 
         $('#delete-emitter').text('Delete Emitter')
-            .addClass('btn-right')
-            .click(function (event) {
+                .addClass('btn-right')
+                .click(function(event) {
 
             event.stopImmediatePropagation();
 
-            $(window).on('keyup.deleteEmitter', function (event) {
+            $(window).on('keyup.deleteEmitter', function(event) {
                 if (event.keyCode === 27) {
                     $('#delete-emitter-div').remove();
                     $(window).off('keyup.deleteEmitter');
@@ -184,12 +243,14 @@ PEE.optionsMenu = (function ($, window, undefined) {
             }
 
             var deleteList = $('<div>')
-                .attr('id', 'delete-emitter-div')
-                .appendTo('#actions');
+                    .attr('id', 'delete-emitter-div')
+                    .appendTo('#actions');
 
-            effect.emitters.forEach(function (element, index, array) {
-                var ep = $('<p>').text(element.opts.emitterName)
-                    .click(function (event) {
+            effect.emitters.forEach(function(element, index, array) {
+
+                var ep = $('<p>').text(element.emitterName)
+                        .click(function(event) {
+
                     effect.emitters[index] = null
                     effect.emitters.splice(index, 1);
                     $('div').trigger('emitter-removed');
@@ -198,7 +259,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
                 deleteList.append(ep);
             });
 
-            $('*').one('click', function (event) {
+            $('*').one('click', function(event) {
                 $('#delete-emitter-div').remove();
             });
 
@@ -209,24 +270,24 @@ PEE.optionsMenu = (function ($, window, undefined) {
         var controlsMenu = $('<div>');
 
         controlsMenu.addClass('menu-div-left')
-            .attr('id', 'graph-menu')
-            .appendTo(optionsMenu)
-            .append('<h4 class="menu-heading">Controls</h4>');
+                .attr('id', 'graph-menu')
+                .appendTo(optionsMenu)
+                .append('<h4 class="menu-heading">Controls</h4>');
 
         createEmitterSelect();
 
-        controlsMenu.on('emitter-added emitter-removed', function (event) {
+        controlsMenu.on('emitter-added emitter-removed', function(event) {
             $('#emitter-select').remove();
             createEmitterSelect();
         });
 
-        function createEmitterSelect () {
+        function createEmitterSelect() {
             var emitterSel = $('<select>');
 
             controlsMenu.prepend(emitterSel);
             emitterSel.attr('id', 'emitter-select')
-                .addClass('menu-select')
-                .append('<option value="master">master</option>');
+                    .addClass('menu-select')
+                    .append('<option value="master">master</option>');
 
             for (var i = 0; i < emitters.length; i++) {
                 emitterSel.append('<option value="' + emitters[i].emitterName + '">' + emitters[i].emitterName + '</option>');
@@ -234,7 +295,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
             controlsMenu.find('h4').height($('#emitter-select').height() * 2);
 
-            emitterSel.click(function (event) {
+            emitterSel.click(function(event) {
                 var emitter;
 
                 if (emitterSel.val() === 'master') {
@@ -252,26 +313,26 @@ PEE.optionsMenu = (function ($, window, undefined) {
                 }
 
                 var gConfig = emitter.opts.graphablesConfig,
-                    cConfig = emitter.opts.channelConfig,
-                    $graphSelects = $(controlsMenu.find('p select.graph-select:visible')),
-                    $channelSelects = $(controlsMenu.find('p select.channel-select'));
+                        cConfig = emitter.opts.channelConfig,
+                        $graphSelects = $(controlsMenu.find('p select.graph-select:visible')),
+                        $channelSelects = $(controlsMenu.find('p select.channel-select'));
 
-                $graphSelects.children('.slider-opt').each(function (index, element) {
+                $graphSelects.children('.slider-opt').each(function(index, element) {
                     element.selected = true;
                 });
 
-                $graphSelects.children('.graph-opt').each(function (index, element) {
+                $graphSelects.children('.graph-opt').each(function(index, element) {
                     var flag = $(element).closest('p')[0].childNodes[0].nodeValue.toUpperCase() + '_BIT';
                     if (gConfig & PEE.ParticleEffect.GRAPHABLE_FLAGS[flag]) {
                         element.selected = true;
                     }
                 });
 
-                $channelSelects.children('.use-master-opt').each(function (index, element) {
+                $channelSelects.children('.use-master-opt').each(function(index, element) {
                     element.selected = true;
                 });
 
-                $channelSelects.children('.use-self-opt').each(function (index, element) {
+                $channelSelects.children('.use-self-opt').each(function(index, element) {
                     var flag = $(element).closest('p')[0].childNodes[0].nodeValue.toUpperCase() + '_BIT';
                     if (cConfig & PEE.ParticleEffect.CHANNEL_FLAGS[flag]) {
                         element.selected = true;
@@ -290,36 +351,36 @@ PEE.optionsMenu = (function ($, window, undefined) {
             }
 
             var grp = $('<p>'),
-                grsel = $('<select>'),
-                useMasterSel = $('<select>');
+                    grsel = $('<select>'),
+                    useMasterSel = $('<select>');
 
             grp.addClass('options-menu-p')
-                .text(opt)
-                .appendTo(controlsMenu);
+                    .text(opt)
+                    .appendTo(controlsMenu);
 
             grsel.addClass('menu-select graph-select')
-                .css('clear', 'both')
-                .appendTo(grp)
-                .append('<option class="slider-opt" value="slider">Slider</option>')
-                .append('<option class="graph-opt" value="graph">Graph</option>')
-                .data('name', opt)
+                    .css('clear', 'both')
+                    .appendTo(grp)
+                    .append('<option class="slider-opt" value="slider">Slider</option>')
+                    .append('<option class="graph-opt" value="graph">Graph</option>')
+                    .data('name', opt)
 
-                .click(function (event) {
+                    .click(function(event) {
 
                 var $this = $(this),
-                    $tb,
-                    emitter;
+                        $tb,
+                        emitter;
 
-                $('.toolbar').each(function (index, element) {
+                $('.toolbar').each(function(index, element) {
                     if ($(element).data('name') === $('#emitter-select').val()) {
                         $tb = $(element);
                         emitter = ($tb.data('master')) ? effect : $tb.data('emitter');
                     }
                 });
 
-                $tb.find('svg').each(function (index, element) {
+                $tb.find('svg').each(function(index, element) {
                     var $svg = $(element),
-                        flag = ($this.data('name').toUpperCase() + '_BIT');
+                            flag = ($this.data('name').toUpperCase() + '_BIT');
 
                     if ($svg.data('name') === $this.data('name')) {
                         if ($this.val() === 'graph') {
@@ -327,21 +388,21 @@ PEE.optionsMenu = (function ($, window, undefined) {
                             $svg.data('slider').css('display', 'none');
                             $svg.css('display', 'block');
                             $svg.siblings('.max-span').detach()
-                                .removeClass('max-span')
-                                .addClass('max-span-left')
-                                .insertBefore($svg.siblings('h5'));
+                                    .removeClass('max-span')
+                                    .addClass('max-span-left')
+                                    .insertBefore($svg.siblings('h5'));
                             $svg.siblings('.min-span').detach()
-                                .insertAfter($svg);
+                                    .insertAfter($svg);
                             $svg.parent().css('padding-bottom', '6px');
                         } else if ($this.val() === 'slider') {
                             emitter.disableGraphed(PEE.ParticleEffect.GRAPHABLE_FLAGS[flag]);
                             $svg.data('slider').css('display', 'block');
                             $svg.siblings('.max-span-left').detach()
-                                .removeClass('max-span-left')
-                                .addClass('max-span')
-                                .insertBefore($svg.siblings('h5'));
+                                    .removeClass('max-span-left')
+                                    .addClass('max-span')
+                                    .insertBefore($svg.siblings('h5'));
                             $svg.siblings('.min-span').detach()
-                                .insertBefore($svg.siblings('h5'));
+                                    .insertBefore($svg.siblings('h5'));
                             $svg.parent().css('padding-bottom', '0px');
                             $svg.css('display', 'none');
 
@@ -353,24 +414,24 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
             if (opt.match(/numParticles|life|delay/)) {
                 grsel.css('visibility', 'hidden')
-                    .removeClass('graph-select')
-                    .addClass('spacer-select');
+                        .removeClass('graph-select')
+                        .addClass('spacer-select');
             }
 
             useMasterSel.addClass('menu-select channel-select')
-                .appendTo(grp)
-                .append('<option class="use-master-opt" value="useMaster">Use Master</option>')
-                .append('<option class="use-self-opt" value="useSelf">Use Self</option>')
+                    .appendTo(grp)
+                    .append('<option class="use-master-opt" value="useMaster">Use Master</option>')
+                    .append('<option class="use-self-opt" value="useSelf">Use Self</option>')
 
-                .data('name', opt)
+                    .data('name', opt)
 
-                .click(function (event) {
+                    .click(function(event) {
                 var $this = $(this),
-                    $tb,
-                    emitter,
-                    flag = ($this.data('name').toUpperCase() + '_BIT').replace(' ', '_');
+                        $tb,
+                        emitter,
+                        flag = ($this.data('name').toUpperCase() + '_BIT').replace(' ', '_');
 
-                $('.toolbar').each(function (index, element) {
+                $('.toolbar').each(function(index, element) {
                     if ($(element).data('name') === $('#emitter-select').val()) {
                         $tb = $(element);
                         emitter = ($tb.data('master')) ? effect : $tb.data('emitter');
@@ -380,13 +441,13 @@ PEE.optionsMenu = (function ($, window, undefined) {
                 if ($this.val() === 'useSelf') {
                     emitter.useOwnChannel(PEE.ParticleEffect.CHANNEL_FLAGS[flag]);
 
-                    $tb.find('.setting-tainer').each(function (index, element) {
+                    $tb.find('.setting-tainer').each(function(index, element) {
                         var $element = $(element);
 
                         if ($element.find('h5').text() === $this.data('name')) {
                             $element.css('color', 'rgb(224, 224, 224)')
-                                .find('.ui-slider').css('background-color', 'rgb(160, 160, 160)')
-                                .andSelf().find('.ui-slider-handle').css('background-color', 'rgb(224, 224, 224)');
+                                    .find('.ui-slider').css('background-color', 'rgb(160, 160, 160)')
+                                    .andSelf().find('.ui-slider-handle').css('background-color', 'rgb(224, 224, 224)');
 
                             $element.find('.gridline-horiz, .gridline-vert').attr('stroke', '#FFF');
                             $element.find('text').attr('fill', '#A0A0A0');
@@ -399,12 +460,12 @@ PEE.optionsMenu = (function ($, window, undefined) {
                 } else if ($this.val() === 'useMaster') {
                     emitter.useMasterChannel(PEE.ParticleEffect.CHANNEL_FLAGS[flag]);
 
-                    $tb.find('.setting-tainer').each(function (index, element) {
+                    $tb.find('.setting-tainer').each(function(index, element) {
                         var $element = $(element);
 
                         if ($element.find('h5').text() === $this.data('name')) {
                             $element.css('color', '#303030')
-                                .find('.ui-slider, .ui-slider-handle').css('background-color', '#303030')
+                                    .find('.ui-slider, .ui-slider-handle').css('background-color', '#303030')
                             $element.find('.ui-slider-handle').css('background-color', '#303030');
 
                             $element.find('.gridline-horiz, .gridline-vert').attr('stroke', '#303030');
@@ -423,7 +484,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
         // set inital state of graph-selects based on effect.opts.graphablesConfig
         $(controlsMenu.find('p select.graph-select'))
-            .each(function (index, element) {
+                .each(function(index, element) {
 
             var flag = $(element).closest('p')[0].childNodes[0].nodeValue.toUpperCase() + '_BIT';
             if (effect.opts.graphablesConfig & PEE.ParticleEffect.GRAPHABLE_FLAGS[flag]) {
@@ -433,40 +494,40 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
         // textures
         var textDiv = $('<div>').addClass('menu-div-right')
-            .attr('id', 'textures-div')
-            .appendTo(optionsMenu)
-            .append('<h4 class="menu-heading">Textures</h4>');
+                .attr('id', 'textures-div')
+                .appendTo(optionsMenu)
+                .append('<h4 class="menu-heading">Textures</h4>');
 
         createTextureList();
 
-        textDiv.on('emitter-added emitter-removed', function (event) {
+        textDiv.on('emitter-added emitter-removed', function(event) {
             $('#textures-div p').remove();
             createTextureList();
         });
 
-        function createTextureList () {
+        function createTextureList() {
             for (var i = 0; i < emitters.length; i++) {
                 var tp = $('<p>'),
-                    inp = $('<input>'),
-                    img = $('<img>')
+                        inp = $('<input>'),
+                        img = $('<img>')
                 tp.addClass('options-menu-p')
-                    .text(emitters[i].emitterName)
-                    .append('<img src="images/transparency.png" class="transparency-img">')
-                    .appendTo(textDiv);
+                        .text(emitters[i].emitterName)
+                        .append('<img src="images/transparency.png" class="transparency-img">')
+                        .appendTo(textDiv);
                 // file input tag;
                 inp.attr('type', 'file').css('display', 'none').appendTo(tp);
 
                 // replace menu image with selected image;
-                inp.on('change', function (event) {
+                inp.on('change', function(event) {
                     var file = this.files[0],
-                        newImg = $('<img>'),
-                        $self = $(this);
+                            newImg = $('<img>'),
+                            $self = $(this);
 
                     newImg.attr({
                         height: 32,
                         width: 32
                     }).addClass('text-p-img')
-                        .click(function (event) {
+                            .click(function(event) {
                         $self.click();
                     });
 
@@ -479,12 +540,12 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
                     // read the image into the img tag;
                     var reader = new FileReader();
-                    reader.onload = (function (aImg) {
-                        return function (e) {
-                            aImg.onload = function (event) {
+                    reader.onload = (function(aImg) {
+                        return function(e) {
+                            aImg.onload = function(event) {
                                 var safety = 0,
-                                    ht = aImg.height,
-                                    wt = aImg.width;
+                                        ht = aImg.height,
+                                        wt = aImg.width;
 
                                 while ((ht % 2) === 0 && ht > 1) {
                                     if (safety++ > 1000) {
@@ -534,10 +595,10 @@ PEE.optionsMenu = (function ($, window, undefined) {
                     height: 32,
                     width: 32
                 })
-                    .addClass('text-p-img').appendTo(tp)
-                    // when the image is clicked, the input's;
-                    // click event is triggered;
-                    .click(function (event) {
+                        .addClass('text-p-img').appendTo(tp)
+                        // when the image is clicked, the input's;
+                        // click event is triggered;
+                        .click(function(event) {
                     $(this).data('input').click();
                 });
             }
@@ -545,24 +606,24 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
         // toolbars
         var emittersMenu = $('<div>').addClass('menu-div-right')
-            .attr('id', 'toolbars-div')
-            .appendTo(optionsMenu);
+                .attr('id', 'toolbars-div')
+                .appendTo(optionsMenu);
 
         $('<h5>').addClass('menu-heading')
-            .text('Toolbars')
-            .appendTo(emittersMenu);
+                .text('Toolbars')
+                .appendTo(emittersMenu);
 
         createToolbarList();
 
-        emittersMenu.on('emitter-added emitter-removed', function (event) {
+        emittersMenu.on('emitter-added emitter-removed', function(event) {
             $('#toolbars-div .options-menu-p').remove();
             createToolbarList();
         });
 
-        function createToolbarList () {
+        function createToolbarList() {
             var tbnames = [];
 
-            emitters.forEach(function (element, index, array) {
+            emitters.forEach(function(element, index, array) {
                 tbnames.push(element.emitterName);
             });
 
@@ -570,28 +631,28 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
             for (var i = 0; i < tbnames.length; i++) {
                 var tp = $('<p>').addClass('options-menu-p'),
-                    tbSel = $('<select>');
+                        tbSel = $('<select>');
 
                 tp.text(tbnames[i]).appendTo(emittersMenu);
                 tbSel.addClass('menu-select tb-select')
-                    .appendTo(tp);
+                        .appendTo(tp);
                 if (tbnames[i] === 'master') {
                     tbSel.append('<option value="show">Open</option>')
-                        .append('<option value="hide">Hidden</option>');
+                            .append('<option value="hide">Hidden</option>');
                 } else {
                     tbSel.append('<option value="hide">Hidden</option>')
-                        .append('<option value="show">Open</option>');
+                            .append('<option value="show">Open</option>');
                 }
 
                 tbSel.data('toolbar-name', tbnames[i])
 
-                    .click(function (event) {
+                        .click(function(event) {
                     var $select = $(this);
 
                     if ($select.val() === 'show') {
-                        $('.toolbar-tainer').each(function (index, element) {
+                        $('.toolbar-tainer').each(function(index, element) {
                             var $element = $(element),
-                                $tb = $element.find('.toolbar');
+                                    $tb = $element.find('.toolbar');
 
                             if ($tb.data('master') && $select.data('toolbar-name') === 'master') {
                                 $('#emitter-select').val('master').click();
@@ -618,9 +679,9 @@ PEE.optionsMenu = (function ($, window, undefined) {
                         });
 
                     } else if ($select.val() === 'hide') {
-                        $('.toolbar-tainer').each(function (index, element) {
+                        $('.toolbar-tainer').each(function(index, element) {
                             var $element = $(element),
-                                $tb = $element.find('.toolbar');
+                                    $tb = $element.find('.toolbar');
 
                             if ($tb.data('master') && $select.data('toolbar-name') === 'master') {
                                 $element.add($tb).css('visibility', 'hidden');
@@ -638,8 +699,8 @@ PEE.optionsMenu = (function ($, window, undefined) {
             }
 
             var gmh = $('#graph-menu').height(),
-                tmh = $('#textures-div').height(),
-                emh = $('#toolbars-div').height();
+                    tmh = $('#textures-div').height(),
+                    emh = $('#toolbars-div').height();
 
             if (tmh + emh < gmh) {
                 $('#toolbars-div').height(gmh - tmh)
@@ -647,10 +708,10 @@ PEE.optionsMenu = (function ($, window, undefined) {
         }
 
 
-        $(window).on('load resize', function (event) {
+        $(window).on('load resize', function(event) {
             if (!$('#options-menu').data('max-height-set')) {
                 $('#options-menu').css('max-height', $('#options-menu').height())
-                    .data('max-height-set', true);
+                        .data('max-height-set', true);
             }
             $('#options-menu').height($(window).height() - 50);
             $('#options-menu').mCustomScrollbar('update');
@@ -664,3 +725,4 @@ PEE.optionsMenu = (function ($, window, undefined) {
     }
 
 }(jQuery, window));
+

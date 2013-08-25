@@ -96,7 +96,11 @@ PEE.gui = (function ($, window, undefined) {
 
             $('#container').append('<div id="create-tb">');
 
-            $('#create-tb').css({visibility: 'hidden'}).on('emitter-added', function (event) {
+            $('#create-tb').css({visibility: 'hidden'}).on('emitter-added', function (event, effectArg) {
+                if (effectArg) {
+                    effect = effectArg;
+                    emitters = effect.emitters;
+                }
                 PEE.toolbar(emitters[emitters.length - 1], tbOpts);
             });
 
