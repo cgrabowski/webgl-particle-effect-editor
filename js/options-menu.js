@@ -1,9 +1,13 @@
 var PEE = PEE || {};
 
 PEE.optionsMenu = (function ($, window, undefined) {
+    var effect,
+        emitters;
 
     // options menu
-    return function (effect, emitters, guiOpts) {
+    return function (effectArg, emittersArg, guiOpts) {
+        effect = effectArg;
+        emitters = emittersArg;
 
         var optionsMenu = $('<div>').attr('id', 'options-menu');
 
@@ -66,28 +70,69 @@ PEE.optionsMenu = (function ($, window, undefined) {
         }
 
         $('#save-btn').text('Save Effect').click(function (event) {
-            try {
-                var save = [],
-                    json,
-                    blob;
+            event.stopImmediatePropagation();
 
-                for (var i = 0; i < emitters.length; i++) {
-                    save.push(emitters[i].opts);
+            $(window).on('keyup.saveEffect', function (event) {
+                if (event.keyCode === 13) {
+                    saveEffect($('#save-effect-input').val());
+                    $('#save-effect-div').remove();
+                } else if (event.keyCode === 27) {
+                    $('#save-effect-div').remove();
                 }
 
-                json = JSON.stringify(save, undefined, 2);
+                if (event.keyCode === 13 || event.keyCode === 27) {
+                    $('div').off('click.saveEffect');
+                    $(window).off('keyup.saveEffect');
+                }
+            });
 
+            $('div').on('click.saveEffect', function (event) {
+                event.stopImmediatePropagation();
+                if ($(event.target).is('#save-effect-input')) {
+                    return false;
+                }
+
+                saveEffect($('#save-effect-input').val());
+                $('div').off('click.createEmitter');
+                $(window).off('keyup.createEmitter');
+                $('#save-effect-div').remove();
+                return false;
+            });
+
+            $('<div>').attr('id', 'save-effect-div')
+                .appendTo('#actions')
+                .append('<input type="text" id="save-effect-input" />');
+
+            $('#save-effect-input').focus();
+        });
+
+        function saveEffect (fileName) {
+            var save = [],
+                json,
+                blob;
+
+            fileName = fileName || "effect";
+
+            for (var i = 0; i < emitters.length; i++) {
+                save.push(emitters[i].opts);
+            }
+            console.log(effect.opts);
+            save.unshift(effect.opts);
+
+            try {
+                json = JSON.stringify(save, undefined, 2);
                 blob = new Blob([json], {type: 'application/json'});
-                saveAs(blob, "effect.json");
+                saveAs(blob, fileName + ".json");
             } catch (e) {
                 console.error('error saving effect.\n%o\n%o', emitters, save);
             }
-        });
+        }
+
 
         $('#load-btn').text('Load Effect').click(function (event) {
             $('#load-input').click();
-        });
-
+        }
+        );
         $('#load-input').css('display', 'none')
             .attr('type', 'file')
 
@@ -97,13 +142,26 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
             reader.onload = function (event) {
                 $('#load-btn').text(file.name);
-                var effectData = JSON.parse(event.currentTarget.result);
-                emitters.length = effectData.length;
-                for (var i = 0; i < effectData.length; i++) {
-                    for (var opt in effectData[i]) {
-                        emitters[i][opt] = effectData[i][opt];
-                    }
-                }
+                var effectData = JSON.parse(event.currentTarget.result),
+                    oldEmitters = effect.emitters,
+                    newEffectOpts = effectData.shift();
+
+                window.dispatchEvent(new CustomEvent('pause'));
+                effect.textureManager('dispose')();
+                effect.shaderManager('dispose')();
+                delete window.effect;
+                oldEmitters.forEach(function (element, index, array) {
+                    delete array[index];
+                });
+                delete oldEmitters;
+
+                PEE.engine($('#webgl-canvas')[0], newEffectOpts, effectData, function (gl, effectArg, render) {
+                    effect = effectArg;
+                    emitters = effect.emitters;
+                    $('div').trigger('emitter-removed');
+                    $('div').trigger('emitter-added', effect);
+                    render();
+                });
             };
 
             reader.readAsText(file);
@@ -149,6 +207,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
         });
 
         function createEmitter (name) {
+            
             $('div').off('click.createEmitter');
             $(window).off('keyup.createEmitter');
             name = name || null;
@@ -188,8 +247,10 @@ PEE.optionsMenu = (function ($, window, undefined) {
                 .appendTo('#actions');
 
             effect.emitters.forEach(function (element, index, array) {
-                var ep = $('<p>').text(element.opts.emitterName)
+                
+                var ep = $('<p>').text(element.emitterName)
                     .click(function (event) {
+                    
                     effect.emitters[index] = null
                     effect.emitters.splice(index, 1);
                     $('div').trigger('emitter-removed');
@@ -663,4 +724,5 @@ PEE.optionsMenu = (function ($, window, undefined) {
         });
     }
 
-}(jQuery, window));
+}(jQuery, window)
+    );
