@@ -1,20 +1,11 @@
 var PEE = PEE || {};
 
-<<<<<<< HEAD
 PEE.optionsMenu = (function($, window, undefined) {
     var effect,
             emitters;
 
     // options menu
     return function(effectArg, emittersArg, guiOpts) {
-=======
-PEE.optionsMenu = (function ($, window, undefined) {
-    var effect,
-        emitters;
-
-    // options menu
-    return function (effectArg, emittersArg, guiOpts) {
->>>>>>> 3fb13673126c912e9855475c9aa35cc5b52f4c86
         effect = effectArg;
         emitters = emittersArg;
 
@@ -26,6 +17,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
         var actions = $('<div id="actions">').addClass('menu-div-full');
 
         optionsMenu.prepend(actions);
+
         actions
                 .append('<button id="reset-btn">')
                 .append('<h4 class="menu-heading">Actions</h4>')
@@ -33,6 +25,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
                 .append('<button id="load-btn">')
                 .append('<input id="load-input">')
                 .append('<button id="add-emitter">');
+
         $('<button id="delete-emitter">').insertBefore($('#add-emitter'));
 
         $('#reset-btn').text('Reset GUI and Effect Data')
@@ -78,7 +71,6 @@ PEE.optionsMenu = (function ($, window, undefined) {
             location.reload();
         }
 
-<<<<<<< HEAD
         $('#save-btn').text('Save Effect').click(function(event) {
             event.stopImmediatePropagation();
 
@@ -123,52 +115,6 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
             fileName = fileName || "effect";
 
-=======
-        $('#save-btn').text('Save Effect').click(function (event) {
-            event.stopImmediatePropagation();
-
-            $(window).on('keyup.saveEffect', function (event) {
-                if (event.keyCode === 13) {
-                    saveEffect($('#save-effect-input').val());
-                    $('#save-effect-div').remove();
-                } else if (event.keyCode === 27) {
-                    $('#save-effect-div').remove();
-                }
-
-                if (event.keyCode === 13 || event.keyCode === 27) {
-                    $('div').off('click.saveEffect');
-                    $(window).off('keyup.saveEffect');
-                }
-            });
-
-            $('div').on('click.saveEffect', function (event) {
-                event.stopImmediatePropagation();
-                if ($(event.target).is('#save-effect-input')) {
-                    return false;
-                }
-
-                saveEffect($('#save-effect-input').val());
-                $('div').off('click.createEmitter');
-                $(window).off('keyup.createEmitter');
-                $('#save-effect-div').remove();
-                return false;
-            });
-
-            $('<div>').attr('id', 'save-effect-div')
-                .appendTo('#actions')
-                .append('<input type="text" id="save-effect-input" />');
-
-            $('#save-effect-input').focus();
-        });
-
-        function saveEffect (fileName) {
-            var save = [],
-                json,
-                blob;
-
-            fileName = fileName || "effect";
-
->>>>>>> 3fb13673126c912e9855475c9aa35cc5b52f4c86
             for (var i = 0; i < emitters.length; i++) {
                 save.push(emitters[i].opts);
             }
@@ -187,8 +133,8 @@ PEE.optionsMenu = (function ($, window, undefined) {
 
         $('#load-btn').text('Load Effect').click(function(event) {
             $('#load-input').click();
-        }
-        );
+        });
+
         $('#load-input').css('display', 'none')
                 .attr('type', 'file')
 
@@ -199,32 +145,20 @@ PEE.optionsMenu = (function ($, window, undefined) {
             reader.onload = function(event) {
                 $('#load-btn').text(file.name);
                 var effectData = JSON.parse(event.currentTarget.result),
-<<<<<<< HEAD
                         oldEmitters = effect.emitters,
                         newEffectOpts = effectData.shift();
-=======
-                    oldEmitters = effect.emitters,
-                    newEffectOpts = effectData.shift();
->>>>>>> 3fb13673126c912e9855475c9aa35cc5b52f4c86
 
                 window.dispatchEvent(new CustomEvent('pause'));
                 effect.textureManager('dispose')();
                 effect.shaderManager('dispose')();
                 delete window.effect;
-<<<<<<< HEAD
+
                 oldEmitters.forEach(function(element, index, array) {
-=======
-                oldEmitters.forEach(function (element, index, array) {
->>>>>>> 3fb13673126c912e9855475c9aa35cc5b52f4c86
                     delete array[index];
                 });
                 delete oldEmitters;
 
-<<<<<<< HEAD
                 PEE.engine($('#webgl-canvas')[0], newEffectOpts, effectData, function(gl, effectArg, render) {
-=======
-                PEE.engine($('#webgl-canvas')[0], newEffectOpts, effectData, function (gl, effectArg, render) {
->>>>>>> 3fb13673126c912e9855475c9aa35cc5b52f4c86
                     effect = effectArg;
                     emitters = effect.emitters;
                     $('div').trigger('emitter-removed');
@@ -275,13 +209,7 @@ PEE.optionsMenu = (function ($, window, undefined) {
             $('#add-emitter-input').focus();
         });
 
-<<<<<<< HEAD
         function createEmitter(name) {
-
-=======
-        function createEmitter (name) {
-            
->>>>>>> 3fb13673126c912e9855475c9aa35cc5b52f4c86
             $('div').off('click.createEmitter');
             $(window).off('keyup.createEmitter');
             name = name || null;
@@ -325,26 +253,24 @@ PEE.optionsMenu = (function ($, window, undefined) {
                 var ep = $('<p>').text(element.emitterName)
                         .click(function(event) {
 
-<<<<<<< HEAD
-=======
-            effect.emitters.forEach(function (element, index, array) {
-                
-                var ep = $('<p>').text(element.emitterName)
-                    .click(function (event) {
-                    
->>>>>>> 3fb13673126c912e9855475c9aa35cc5b52f4c86
-                    effect.emitters[index] = null
-                    effect.emitters.splice(index, 1);
-                    $('div').trigger('emitter-removed');
+                    effect.emitters.forEach(function(element, index, array) {
+
+                        var ep = $('<p>').text(element.emitterName)
+                                .click(function(event) {
+                            effect.emitters[index] = null
+                            effect.emitters.splice(index, 1);
+                            $('div').trigger('emitter-removed');
+                        });
+
+                        deleteList.append(ep);
+                    });
+
+                    $('*').one('click', function(event) {
+                        $('#delete-emitter-div').remove();
+                    });
+
                 });
-
-                deleteList.append(ep);
             });
-
-            $('*').one('click', function(event) {
-                $('#delete-emitter-div').remove();
-            });
-
         });
 
 
@@ -806,10 +732,4 @@ PEE.optionsMenu = (function ($, window, undefined) {
         });
     }
 
-<<<<<<< HEAD
 }(jQuery, window));
-
-=======
-}(jQuery, window)
-    );
->>>>>>> 3fb13673126c912e9855475c9aa35cc5b52f4c86
