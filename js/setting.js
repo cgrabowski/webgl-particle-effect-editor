@@ -128,7 +128,6 @@ PEE.setting = (function ($, window, undefined) {
                         break;
 
                     } else if (name.match(/numParticles|life|delay/)) {
-                        console.log('blah');
                         whoseOpts.opts[name + 'Limits'].splice(minOrMax, 1, newLimit);
                         break;
                     }

@@ -118,7 +118,6 @@ PEE.optionsMenu = (function($, window, undefined) {
             for (var i = 0; i < emitters.length; i++) {
                 save.push(emitters[i].opts);
             }
-            console.log(effect.opts);
             save.unshift(effect.opts);
 
             try {
@@ -569,7 +568,6 @@ PEE.optionsMenu = (function($, window, undefined) {
                                     }
                                     wt /= 2;
                                 }
-                                console.log(ht, wt);
                                 if (ht !== 1 || wt !== 1) {
                                     alert('Texture dimensions must be a <a href="http://en.wikipedia.org/wiki/Power_of_two">power of two</a>.');
                                 } else {
