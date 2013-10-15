@@ -58,10 +58,6 @@ PEE.settingGraph = (function ($, window, undefined) {
             $svg.find('.gridline-horiz').attr({
                 x2: nw
             });
-            $svg.find('text').attr({
-                x: ($svg.width() - $svg.find('text')[0].getBBox().width) / 2,
-                y: $svg.height() - (0.3 * $($svg.find('text')[0]).height())
-            });
             $svg.each(function (index, element) {
                 for (var i = 0, ht = 0; ht < $rect.attr('height'); ht += $rect.attr('height') / 5) {
                     $line = $($(element).find('.gridline-horiz')[i++]),
@@ -196,8 +192,7 @@ PEE.settingGraph = (function ($, window, undefined) {
                     .find('.ui-slider, .ui-slider-handle').css('background-color', '#303030')
                     .andSelf().find('.ui-slider-handle').css('background-color', '#303030');
 
-                $svg.find('.gridline-horiz, .gridline-vert').attr('stroke', '#303030');
-                $svg.find('text').attr('fill', '#303030');
+                $svg.find('.gridline-horiz, .gridline-vert').attr('stroke', '#303030');                
                 $svg.find('rect, .minline, .maxline').attr('stroke-width', '0');
                 $svg.find('circle').attr({'stroke-width': 0, r: 0});
 
